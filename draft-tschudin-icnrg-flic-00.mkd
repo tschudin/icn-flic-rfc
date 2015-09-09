@@ -42,8 +42,8 @@ informative:
 --- abstract
 
 This document describes a bare bones "index table"-approach for
-organizing a set of ICN data objects into a large, file-like
-collection (FLIC).
+organizing a set of ICN data objects into a large, File-LIke
+Collection (FLIC).
 
 At the core of this collection is a so called manifest which acts as
 the collection's root node. The manifest contains an index table with
@@ -69,7 +69,7 @@ One figure
   |                                            |
   | data:                                      |
   |   sequence of                              |
-  |     hash value pointers, or embedded data  |
+  |     hash-valued pointers, or embedded data |
   |                   \  \       +------+      |
   | metadata:          \  \      | data |      |
   |   sequence of       \  \     +------+      |
@@ -81,33 +81,38 @@ One figure
                    | data |             |   pointers |
                    +------+             |     \  \   |
                                         +------\--\--+
-                                                ....
+                                                vvvv
 ~~~
-{: #manifest title="Manifest and direct acyclic graph"}
+{: #manifest title="A FLIC manifest and its directed acyclic graph"}
 
 Design goals
 ------------
 
 * Copy the proven UNIX inode concept:
   * index tables and memory pointers (tree)
-  * a single inode block can represent a small file
+  * a single inode block can represent a small file (embedded data)
   * sparse files
 
-* ICN benefits, optimizations:
+* ICN optimizations:
   * block-level deduplification (leads to a directed acyclic graph, DAG)
   * encode series of zero bytes
-  * eliminate reference to chunk numbering schemata
+  * eliminate reference to chunk numbering schemata (hash values only)
+  * one manifest signature covers all elements, including auxiliare
+    data structures, of the full collection.
 
 * Limitations
-  * all data (leafs) must be present at manifest creation time
-  * only manifest (root) node has metadata (encryption key info,
-    timestamps etc)
+  * all data leafs must be present at manifest creation time (otherwise
+    one cannot compute the pointers)
+  * only the manifest ICN object has metadata (encryption key info,
+    timestamps etc), which thus applies to all blocks of the DAG.
 
 * Potential extensions (for study):
-  * manifest as a "database cursor", or as a cursor over time series
+  * Enhance the manifest such that it can serve as a "database cursor"
+    or as a cursor over a time series, e.g. having entries for "previous"
+    and "next" collections.
 
 
-File-Like ICN Collection (FLIC) Format
+File-LIke Collection (FLIC) Format
 ======================================
 
 
@@ -247,12 +252,12 @@ actucal metadata ICn object.
 Encoding strategies
 -------------------
 
-FLIC's Node+Leaf data structures encode a tree or acyclic directed
+FLIC's Node+Leaf data structures encode a tree or directed acyclic
 graph. This leaves it open how to balance the graph during its
 encoding. An extreme layout would be a chain of nodes, each having a
 single pointer to a leaf plus a continuation pointer for the next
-node. The opposit layout would be a master index table pointing to many
-leafs or sub-tables such as to minimize the tree's height.
+node. The opposit layout would be a master index table pointing to
+many leafs or sub-tables such as to minimize the tree's height.
 
 For performance reasons it is suggested to follow a chain pattern
 where each index table node in the chain has at least 10 to 20
@@ -267,9 +272,9 @@ top-level index table can be used as starting point for the new one
 which is extended by one leaf pointer. In any case a new manifest
 object is created which also needs a new name.
 
-Note that the new manifest's name usually will differ (e.g. version
-name component) and that the new manifest might need to carry an
-explicit locator entry in the metadata section in order to make the
+Note that the new manifest's name usually will differ (e.g. in the
+version name component) and that the new manifest might need to carry
+an explicit locator entry in the metadata section in order to make the
 (old) leaf objects accessible.
 
 --- back

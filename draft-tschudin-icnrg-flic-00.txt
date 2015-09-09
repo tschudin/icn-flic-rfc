@@ -14,8 +14,8 @@ Expires: March 10, 2016
 Abstract
 
    This document describes a bare bones "index table"-approach for
-   organizing a set of ICN data objects into a large, file-like
-   collection (FLIC).
+   organizing a set of ICN data objects into a large, File-LIke
+   Collection (FLIC).
 
    At the core of this collection is a so called manifest which acts as
    the collection's root node.  The manifest contains an index table
@@ -70,7 +70,7 @@ Table of Contents
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
      1.1.  FLIC as a Distributed Data Structure  . . . . . . . . . .   2
      1.2.  Design goals  . . . . . . . . . . . . . . . . . . . . . .   3
-   2.  File-Like ICN Collection (FLIC) Format  . . . . . . . . . . .   4
+   2.  File-LIke Collection (FLIC) Format  . . . . . . . . . . . . .   4
      2.1.  FLIC format in EBN  . . . . . . . . . . . . . . . . . . .   4
      2.2.  Use of hash-valued pointers . . . . . . . . . . . . . . .   5
      2.3.  Sparse files and long sequences of zeros  . . . . . . . .   5
@@ -120,7 +120,7 @@ Internet-Draft                  ICN-FLIC                  September 2015
      |                                            |
      | data:                                      |
      |   sequence of                              |
-     |     hash value pointers, or embedded data  |
+     |     hash-valued pointers, or embedded data |
      |                   \  \       +------+      |
      | metadata:          \  \      | data |      |
      |   sequence of       \  \     +------+      |
@@ -132,9 +132,9 @@ Internet-Draft                  ICN-FLIC                  September 2015
                       | data |             |   pointers |
                       +------+             |     \  \   |
                                            +------\--\--+
-                                                   ....
+                                                   vvvv
 
-                Figure 1: Manifest and direct acyclic graph
+         Figure 1: A FLIC manifest and its directed acyclic graph
 
 1.2.  Design goals
 
@@ -142,26 +142,26 @@ Internet-Draft                  ICN-FLIC                  September 2015
 
       *  index tables and memory pointers (tree)
 
-      *  a single inode block can represent a small file
+      *  a single inode block can represent a small file (embedded data)
 
       *  sparse files
 
-   o  ICN benefits, optimizations:
+   o  ICN optimizations:
 
       *  block-level deduplification (leads to a directed acyclic graph,
          DAG)
 
       *  encode series of zero bytes
 
-      *  eliminate reference to chunk numbering schemata
+      *  eliminate reference to chunk numbering schemata (hash values
+         only)
 
    o  Limitations
 
-      *  all data (leafs) must be present at manifest creation time
+      *  all data leafs must be present at manifest creation time
 
-      *  only manifest (root) node has metadata (encryption key info,
-         timestamps etc)
-
+      *  only the manifest ICN object has metadata (encryption key info,
+         timestamps etc), which thus applies to all blocks of the DAG.
 
 
 
@@ -172,10 +172,11 @@ Internet-Draft                  ICN-FLIC                  September 2015
 
    o  Potential extensions (for study):
 
-      *  manifest as a "database cursor", or as a cursor over time
-         series
+      *  Enhance the manifest such that it can serve as a "database
+         cursor" or as a cursor over a time series, e.g. having entries
+         for "previous" and "next" collections.
 
-2.  File-Like ICN Collection (FLIC) Format
+2.  File-LIke Collection (FLIC) Format
 
 2.1.  FLIC format in EBN
 
@@ -217,7 +218,6 @@ Internet-Draft                  ICN-FLIC                  September 2015
 
       *  LeafDigest = hash value of an ICN data object
 
-      *  NodeDigest = hash value of an ICN data object hosting a Node
 
 
 
@@ -225,6 +225,8 @@ Tschudin                 Expires March 10, 2016                 [Page 4]
 
 Internet-Draft                  ICN-FLIC                  September 2015
 
+
+      *  NodeDigest = hash value of an ICN data object hosting a Node
 
       *  the two encrypted forms thereof
 
@@ -275,8 +277,6 @@ Internet-Draft                  ICN-FLIC                  September 2015
 
 
 
-
-
 Tschudin                 Expires March 10, 2016                 [Page 5]
 
 Internet-Draft                  ICN-FLIC                  September 2015
@@ -319,7 +319,7 @@ Internet-Draft                  ICN-FLIC                  September 2015
 
 3.4.  Encoding strategies
 
-   FLIC's Node+Leaf data structures encode a tree or acyclic directed
+   FLIC's Node+Leaf data structures encode a tree or directed acyclic
    graph.  This leaves it open how to balance the graph during its
    encoding.  An extreme layout would be a chain of nodes, each having a
    single pointer to a leaf plus a continuation pointer for the next
@@ -346,10 +346,10 @@ Internet-Draft                  ICN-FLIC                  September 2015
    which is extended by one leaf pointer.  In any case a new manifest
    object is created which also needs a new name.
 
-   Note that the new manifest's name usually will differ (e.g. version
-   name component) and that the new manifest might need to carry an
-   explicit locator entry in the metadata section in order to make the
-   (old) leaf objects accessible.
+   Note that the new manifest's name usually will differ (e.g. in the
+   version name component) and that the new manifest might need to carry
+   an explicit locator entry in the metadata section in order to make
+   the (old) leaf objects accessible.
 
 Author's Address
 

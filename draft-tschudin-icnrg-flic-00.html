@@ -377,7 +377,7 @@
 <link href="#rfc.section.1" rel="Chapter" title="1 Introduction"/>
 <link href="#rfc.section.1.1" rel="Chapter" title="1.1 FLIC as a Distributed Data Structure"/>
 <link href="#rfc.section.1.2" rel="Chapter" title="1.2 Design goals"/>
-<link href="#rfc.section.2" rel="Chapter" title="2 File-Like ICN Collection (FLIC) Format"/>
+<link href="#rfc.section.2" rel="Chapter" title="2 File-LIke Collection (FLIC) Format"/>
 <link href="#rfc.section.2.1" rel="Chapter" title="2.1 FLIC format in EBN"/>
 <link href="#rfc.section.2.2" rel="Chapter" title="2.2 Use of hash-valued pointers"/>
 <link href="#rfc.section.2.3" rel="Chapter" title="2.3 Sparse files and long sequences of zeros"/>
@@ -398,8 +398,8 @@
   <meta name="dct.creator" content="Tschudin, C." />
   <meta name="dct.identifier" content="urn:ietf:id:draft-tschudin-icnrg-flic-00" />
   <meta name="dct.issued" scheme="ISO8601" content="2015-9-07" />
-  <meta name="dct.abstract" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, file-like collection (FLIC)." />
-  <meta name="description" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, file-like collection (FLIC)." />
+  <meta name="dct.abstract" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-LIke Collection (FLIC)." />
+  <meta name="description" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-LIke Collection (FLIC)." />
 
 </head>
 
@@ -435,7 +435,7 @@
   <h1 id="rfc.abstract">
   <a href="#rfc.abstract">Abstract</a>
 </h1>
-<p>This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, file-like collection (FLIC).</p>
+<p>This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-LIke Collection (FLIC).</p>
 <p>At the core of this collection is a so called manifest which acts as the collection&#8217;s root node. The manifest contains an index table with pointers, each pointer being a hash value pointing to either a final data block or another index table node. Data can also be embedded (in case of a small collection), permitting to use a manifest just for annotating some data e.g. with its timestamp or decryption key information.</p>
 <h1 id="rfc.status">
   <a href="#rfc.status">Status of This Memo</a>
@@ -458,7 +458,7 @@
   	<li>1.   <a href="#rfc.section.1">Introduction</a></li>
 <ul><li>1.1.   <a href="#rfc.section.1.1">FLIC as a Distributed Data Structure</a></li>
 <li>1.2.   <a href="#rfc.section.1.2">Design goals</a></li>
-</ul><li>2.   <a href="#rfc.section.2">File-Like ICN Collection (FLIC) Format</a></li>
+</ul><li>2.   <a href="#rfc.section.2">File-LIke Collection (FLIC) Format</a></li>
 <ul><li>2.1.   <a href="#rfc.section.2.1">FLIC format in EBN</a></li>
 <li>2.2.   <a href="#rfc.section.2.2">Use of hash-valued pointers</a></li>
 <li>2.3.   <a href="#rfc.section.2.3">Sparse files and long sequences of zeros</a></li>
@@ -487,7 +487,7 @@
   |                                            |
   | data:                                      |
   |   sequence of                              |
-  |     hash value pointers, or embedded data  |
+  |     hash-valued pointers, or embedded data |
   |                   \  \       +------+      |
   | metadata:          \  \      | data |      |
   |   sequence of       \  \     +------+      |
@@ -499,19 +499,19 @@
                    | data |             |   pointers |
                    +------+             |     \  \   |
                                         +------\--\--+
-                                                ....
+                                                vvvv
 </pre>
-<p class="figure">Figure 1: Manifest and direct acyclic graph</p>
+<p class="figure">Figure 1: A FLIC manifest and its directed acyclic graph</p>
 <h1 id="rfc.section.1.2"><a href="#rfc.section.1.2">1.2.</a> <a href="#design-goals" id="design-goals">Design goals</a></h1>
 <p/>
 
 <ul>
-  <li>Copy the proven UNIX inode concept: <ul><li>index tables and memory pointers (tree)</li><li>a single inode block can represent a small file</li><li>sparse files</li></ul></li>
-  <li>ICN benefits, optimizations: <ul><li>block-level deduplification (leads to a directed acyclic graph, DAG)</li><li>encode series of zero bytes</li><li>eliminate reference to chunk numbering schemata</li></ul></li>
-  <li>Limitations <ul><li>all data (leafs) must be present at manifest creation time</li><li>only manifest (root) node has metadata (encryption key info, timestamps etc)</li></ul></li>
-  <li>Potential extensions (for study): <ul><li>manifest as a &#8220;database cursor&#8221;, or as a cursor over time series</li></ul></li>
+  <li>Copy the proven UNIX inode concept: <ul><li>index tables and memory pointers (tree)</li><li>a single inode block can represent a small file (embedded data)</li><li>sparse files</li></ul></li>
+  <li>ICN optimizations: <ul><li>block-level deduplification (leads to a directed acyclic graph, DAG)</li><li>encode series of zero bytes</li><li>eliminate reference to chunk numbering schemata (hash values only)</li></ul></li>
+  <li>Limitations <ul><li>all data leafs must be present at manifest creation time</li><li>only the manifest ICN object has metadata (encryption key info, timestamps etc), which thus applies to all blocks of the DAG.</li></ul></li>
+  <li>Potential extensions (for study): <ul><li>Enhance the manifest such that it can serve as a &#8220;database cursor&#8221; or as a cursor over a time series, e.g. having entries for &#8220;previous&#8221; and &#8220;next&#8221; collections.</li></ul></li>
 </ul>
-<h1 id="rfc.section.2"><a href="#rfc.section.2">2.</a> <a href="#file-like-icn-collection-flic-format" id="file-like-icn-collection-flic-format">File-Like ICN Collection (FLIC) Format</a></h1>
+<h1 id="rfc.section.2"><a href="#rfc.section.2">2.</a> <a href="#file-like-collection-flic-format" id="file-like-collection-flic-format">File-LIke Collection (FLIC) Format</a></h1>
 <h1 id="rfc.section.2.1"><a href="#rfc.section.2.1">2.1.</a> <a href="#flic-format-in-ebn" id="flic-format-in-ebn">FLIC format in EBN</a></h1>
 <pre>
   Manifest = RootNode MetaData
@@ -571,11 +571,11 @@
 <h1 id="rfc.section.3.3"><a href="#rfc.section.3.3">3.3.</a> <a href="#no-chunking" id="no-chunking">No chunking</a></h1>
 <p id="rfc.section.3.3.p.1">None of the ICN objects used in FLIC are allowed to be chunked, including the manifest. The smallest possible complete manifest contains one pointer to the ICN object containing the topmost index table (or leaf) plus a metadata section having a single entry or the actucal metadata ICn object.</p>
 <h1 id="rfc.section.3.4"><a href="#rfc.section.3.4">3.4.</a> <a href="#encoding-strategies" id="encoding-strategies">Encoding strategies</a></h1>
-<p id="rfc.section.3.4.p.1">FLIC&#8217;s Node+Leaf data structures encode a tree or acyclic directed graph. This leaves it open how to balance the graph during its encoding. An extreme layout would be a chain of nodes, each having a single pointer to a leaf plus a continuation pointer for the next node. The opposit layout would be a master index table pointing to many leafs or sub-tables such as to minimize the tree&#8217;s height.</p>
+<p id="rfc.section.3.4.p.1">FLIC&#8217;s Node+Leaf data structures encode a tree or directed acyclic graph. This leaves it open how to balance the graph during its encoding. An extreme layout would be a chain of nodes, each having a single pointer to a leaf plus a continuation pointer for the next node. The opposit layout would be a master index table pointing to many leafs or sub-tables such as to minimize the tree&#8217;s height.</p>
 <p id="rfc.section.3.4.p.2">For performance reasons it is suggested to follow a chain pattern where each index table node in the chain has at least 10 to 20 pointers to leafs.</p>
 <h1 id="rfc.section.3.5"><a href="#rfc.section.3.5">3.5.</a> <a href="#appending-to-a-flic" id="appending-to-a-flic">Appending to a FLIC</a></h1>
 <p id="rfc.section.3.5.p.1">Adding data to a FLIC means creating a new manifest with a new top-level index table. If the original manifest is not too large, its top-level index table can be used as starting point for the new one which is extended by one leaf pointer. In any case a new manifest object is created which also needs a new name.</p>
-<p id="rfc.section.3.5.p.2">Note that the new manifest&#8217;s name usually will differ (e.g. version name component) and that the new manifest might need to carry an explicit locator entry in the metadata section in order to make the (old) leaf objects accessible.</p>
+<p id="rfc.section.3.5.p.2">Note that the new manifest&#8217;s name usually will differ (e.g. in the version name component) and that the new manifest might need to carry an explicit locator entry in the metadata section in order to make the (old) leaf objects accessible.</p>
 <h1 id="rfc.authors">
   <a href="#rfc.authors">Author's Address</a>
 </h1>
