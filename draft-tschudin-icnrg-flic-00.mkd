@@ -1,0 +1,275 @@
+---
+title: ICN File-Like Collection (FLIC)
+abbrev: ICN-FLIC
+docname: draft-tschudin-icnrg-flic-00
+date: 2015-09-07
+category: info
+
+ipr: trust200902
+area: General
+workgroup: ICNRG Working Group
+keyword: Internet-Draft
+
+stand_alone: yes
+pi: [toc, sortrefs, symrefs]
+
+author:
+ -
+    ins: C. Tschudin
+    name: Christian Tschudin
+    organization: University of Basel
+    email: christian.tschudin@unibas.ch
+
+normative:
+---  RFC2119:
+---  RFC3986:
+---  RFC4086:
+---  RFC4648:
+
+informative:
+---  RFC5389:
+---  I-D.ietf-behave-turn:
+---  STUNT:
+---    target: http://deusty.blogspot.com/2007/09/stunt-out-of-band-channels.html
+---    title: STUNT & out-of-band channels
+---    author:
+---      name: Robbie Hanson
+---      ins: R. Hanson
+---    date: 2007-09-17
+---  I-D.meyer-xmpp-e2e-encryption:
+---  I-D.ietf-xmpp-3920bis:
+
+--- abstract
+
+This document describes a bare bones "index table"-approach for
+organizing a set of ICN data objects into a large, file-like
+collection (FLIC).
+
+At the core of this collection is a so called manifest which acts as
+the collection's root node. The manifest contains an index table with
+pointers, each pointer being a hash value pointing to either a final
+data block or another index table node. Data can also be embedded (in case
+of a small collection), permitting to use a manifest just for annotating
+some data e.g. with its timestamp or decryption key information.
+
+--- middle
+
+Introduction        {#problems}
+============
+
+FLIC as a Distributed Data Structure
+------------------------------------
+
+One figure
+
+~~~
+                                       manifest
+  +--------------------------------------------+
+  | /icn/name/of/this/flic                     |
+  |                                            |
+  | data:                                      |
+  |   sequence of                              |
+  |     hash value pointers, or embedded data  |
+  |                   \  \       +------+      |
+  | metadata:          \  \      | data |      |
+  |   sequence of       \  \     +------+      |
+  |     key-value pairs  \  \                  |
+  +-----------------------|--\-----------------+
+                          |   \                  node
+                    leaf  v    `------> +------------+
+                   +------+             | seq of     |
+                   | data |             |   pointers |
+                   +------+             |     \  \   |
+                                        +------\--\--+
+                                                ....
+~~~
+{: #manifest title="Manifest and direct acyclic graph"}
+
+Design goals
+------------
+
+* Copy the proven UNIX inode concept:
+  * index tables and memory pointers (tree)
+  * a single inode block can represent a small file
+  * sparse files
+
+* ICN benefits, optimizations:
+  * block-level deduplification (leads to a directed acyclic graph, DAG)
+  * encode series of zero bytes
+  * eliminate reference to chunk numbering schemata
+
+* Limitations
+  * all data (leafs) must be present at manifest creation time
+  * only manifest (root) node has metadata (encryption key info,
+    timestamps etc)
+
+* Potential extensions (for study):
+  * manifest as a "database cursor", or as a cursor over time series
+
+
+File-Like ICN Collection (FLIC) Format
+======================================
+
+
+FLIC format in EBN
+------------------
+
+~~~
+  Manifest = RootNode MetaData
+  RootNode = Node | EncrNode
+  Node = *([RepeatCnt] (Pointer | NoneByte | ZeroByte | LeafData]))
+
+  Pointer = LeafDigest | EncrLeafDigest | NodeDigest | EncrNodeDigest
+  LeafData = Blob
+  Leaf = ICNobject(LeafData)
+  EncrLeaf = ICNobject(Blob)
+  EncrNode = ICNobject(Blob)
+  MetaData = *(KeyString Blob)
+~~~
+
+Description:
+
+* A manifest consists of a root node and optionally a meta-data section
+
+* The root node is either in clear ("Node"), or encrypted ("EncrNode")
+
+* A Node is a sequence of four possible Node entry types:
+  * pointer (see below)
+  * None, meaning that the collection contains an absent byte
+  * Zero, meaning that the collection contains a zero byte
+  * LeafData, the actual bytes as part of the collection ("embedding")
+
+* Optionally, a Node entry can be preceeded by a count specifying
+  how often the subsequent node entry has to be repeated in order
+  to reconstruct the collection.
+
+* A Pointer has one of the following four types:
+  * LeafDigest = hash value of an ICN data object
+  * NodeDigest = hash value of an ICN data object hosting a Node
+  * the two encrypted forms thereof
+
+  Note that the encoding of pointers must represent the type information
+  such that a reader of the index table learns what the pointer points
+  at (and how these bytes have to be interpreted).
+
+* MetaData is organized as a sequence of key-value pairs.
+
+
+Use of hash-valued pointers
+---------------------------
+
+FLIC's "Node" data structure is a generalized index table as it is
+known from file systems. The pointers, which in an OS typically are
+harddisk block numbers, are replaced by hash values of other ICN
+objects. These ICN objects contain either other nodes, or leafs. Leafs
+contain the actual data of the collection.
+
+FLIC makes use of "nameless ICN object" where the network is tasked
+with fetching an object based on its digest only. The interest for
+such an object consists of a routing hint (locator) plus the given
+digest value.
+
+
+Sparse files and long sequences of zeros
+----------------------------------------
+
+FLIC supports "files with holes" e.g., memory dumps where some regions
+are undefined because not present at run-time. This is achieved via
+the NoneByte entry in the Node, preceed by a count specifying how many
+bytes are missing.
+
+Similarily, long streches of zeros can be compressed to one ZeroByte
+entry with a preceediung count for the length of such a stretch.
+
+
+Reconstructing the collection's data
+------------------------------------
+
+Default traversal strategy: Starting from the manifest and its root
+index table, the consumer has to traverse the tree (or DAG) in a
+depth-first fashion. Each encountered leaf, embedded leaf, or ZeroByte
+entry contributes to the collection's bytes in that traversed
+sequence.
+
+
+MetaData
+--------
+
+A FLIC's MetaData is organized as a sequence of key-value pairs, keys
+being human-readable strings and their associated values being an
+opaque byte sequence.
+
+Known entries (=well defined names), all are optional:
+
+~~~
+* creation date (UTC)
+* locator value (if different from the manifest's name)
+* info regarding applicable decryption key(s)
+* ICN name towards the next ICN data object containing more metadata
+  (can also be used to share large metadata sections across FLICs)
+* total length in bytes
+* whether a strict block size is used for leafs
+* explicit traversal strategies in form of a pointer to an alternate DAG
+  (for the same data) e.g., reverse block order, block sub-sampling
+* ICN name for a "directory object" that refers to this FLIC
+* resource forks (as in Apple's file system)
+* etc
+~~~
+
+Encoding
+========
+
+Encoding for CCNx
+-----------------
+
+use hashRestriction as selector
+
+how pointers etc are encoded in TLV ...
+
+
+Encoding for NDN
+----------------
+
+use implicitDigest name component as selector
+
+how pointers etc are encoded in TLV ...
+
+
+No chunking
+-----------
+
+None of the ICN objects used in FLIC are allowed to be chunked,
+including the manifest. The smallest possible complete manifest
+contains one pointer to the ICN object containing the topmost index
+table (or leaf) plus a metadata section having a single entry or the
+actucal metadata ICn object.
+
+Encoding strategies
+-------------------
+
+FLIC's Node+Leaf data structures encode a tree or acyclic directed
+graph. This leaves it open how to balance the graph during its
+encoding. An extreme layout would be a chain of nodes, each having a
+single pointer to a leaf plus a continuation pointer for the next
+node. The opposit layout would be a master index table pointing to many
+leafs or sub-tables such as to minimize the tree's height.
+
+For performance reasons it is suggested to follow a chain pattern
+where each index table node in the chain has at least 10 to 20
+pointers to leafs.
+
+Appending to a FLIC
+-------------------
+
+Adding data to a FLIC means creating a new manifest with a new
+top-level index table. If the original manifest is not too large, its
+top-level index table can be used as starting point for the new one
+which is extended by one leaf pointer. In any case a new manifest
+object is created which also needs a new name.
+
+Note that the new manifest's name usually will differ (e.g. version
+name component) and that the new manifest might need to carry an
+explicit locator entry in the metadata section in order to make the
+(old) leaf objects accessible.
+
+--- back
