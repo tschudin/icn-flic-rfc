@@ -383,10 +383,14 @@
 <link href="#rfc.section.2.3" rel="Chapter" title="2.3 Reconstructing the collection&#x2019;s data"/>
 <link href="#rfc.section.2.4" rel="Chapter" title="2.4 Metadata in HashGroups"/>
 <link href="#rfc.section.2.5" rel="Chapter" title="2.5 Locating FLIC leaf and manifest nodes"/>
-<link href="#rfc.section.2.6" rel="Chapter" title="2.6 Advanced uses of FLIC manifests"/>
-<link href="#rfc.section.3" rel="Chapter" title="3 Encoding"/>
-<link href="#rfc.section.3.1" rel="Chapter" title="3.1 Encoding for CCNx"/>
-<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Encoding for NDN"/>
+<link href="#rfc.section.3" rel="Chapter" title="3 Advanced uses of FLIC manifests"/>
+<link href="#rfc.section.3.1" rel="Chapter" title="3.1 Block-level de-duplification"/>
+<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Growing ICN collections"/>
+<link href="#rfc.section.3.3" rel="Chapter" title="3.3 Re-publishing a FLIC under a new name"/>
+<link href="#rfc.section.3.4" rel="Chapter" title="3.4 Data Chunks of variable size"/>
+<link href="#rfc.section.4" rel="Chapter" title="4 Encoding"/>
+<link href="#rfc.section.4.1" rel="Chapter" title="4.1 Encoding for CCNx1.0"/>
+<link href="#rfc.section.4.2" rel="Chapter" title="4.2 Encoding for NDN"/>
 <link href="#rfc.authors" rel="Chapter"/>
 
 
@@ -462,10 +466,14 @@
 <li>2.3.   <a href="#rfc.section.2.3">Reconstructing the collection&#8217;s data</a></li>
 <li>2.4.   <a href="#rfc.section.2.4">Metadata in HashGroups</a></li>
 <li>2.5.   <a href="#rfc.section.2.5">Locating FLIC leaf and manifest nodes</a></li>
-<li>2.6.   <a href="#rfc.section.2.6">Advanced uses of FLIC manifests</a></li>
-</ul><li>3.   <a href="#rfc.section.3">Encoding</a></li>
-<ul><li>3.1.   <a href="#rfc.section.3.1">Encoding for CCNx</a></li>
-<li>3.2.   <a href="#rfc.section.3.2">Encoding for NDN</a></li>
+</ul><li>3.   <a href="#rfc.section.3">Advanced uses of FLIC manifests</a></li>
+<ul><li>3.1.   <a href="#rfc.section.3.1">Block-level de-duplification</a></li>
+<li>3.2.   <a href="#rfc.section.3.2">Growing ICN collections</a></li>
+<li>3.3.   <a href="#rfc.section.3.3">Re-publishing a FLIC under a new name</a></li>
+<li>3.4.   <a href="#rfc.section.3.4">Data Chunks of variable size</a></li>
+</ul><li>4.   <a href="#rfc.section.4">Encoding</a></li>
+<ul><li>4.1.   <a href="#rfc.section.4.1">Encoding for CCNx1.0</a></li>
+<li>4.2.   <a href="#rfc.section.4.2">Encoding for NDN</a></li>
 </ul><li><a href="#rfc.authors">Author's Address</a></li>
 
 
@@ -502,7 +510,7 @@
 <ul>
   <li>Copy the proven UNIX inode concept: <ul><li>index tables and memory pointers</li></ul></li>
   <li>Adaption to ICN: <ul><li>hash values instead of block numbers, unique with high probability</li></ul></li>
-  <li>Advantages (over non-manifest collections): <ul><li>single root manifest signature covers all elements of the full collection, including intermediate sub manifests</li><li>eliminate reference to chunk numbering schemata (hash values only)</li><li>supports block-level deduplification (leads to a directed acyclic graph, or DAG)</li></ul></li>
+  <li>Advantages (over non-manifest collections): <ul><li>single root manifest signature covers all elements of the full collection, including intermediate sub manifests</li><li>eliminate reference to chunk numbering schemata (hash values only)</li><li>supports block-level deduplification (can lead to a directed acyclic graph, or DAG, instead of a tree)</li></ul></li>
   <li>Limitations <ul><li>All data leafs must be present at manifest creation time (otherwise one cannot compute the pointers)</li></ul></li>
   <li>Potential extensions (for study): <ul><li>Enhance the manifest such that it can serve as a &#8220;database cursor&#8221; or as a cursor over a time series, e.g. having entries for &#8220;previous&#8221; and &#8220;next&#8221; collections.</li></ul></li>
 </ul>
@@ -655,12 +663,19 @@ Queries:
   interest(name=/x/y/z, implicitDigest=h1)
   interest(name=/the/locator/hint, implicitDigest=h2)
 </pre>
-<h1 id="rfc.section.2.6"><a href="#rfc.section.2.6">2.6.</a> <a href="#advanced-uses-of-flic-manifests" id="advanced-uses-of-flic-manifests">Advanced uses of FLIC manifests</a></h1>
-<p id="rfc.section.2.6.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects:</p>
-<p id="rfc.section.2.6.p.2">a) dedup</p>
-<p id="rfc.section.2.6.p.3">.. to be written ..</p>
-<p id="rfc.section.2.6.p.4">b) Growing ICN collections</p>
-<p id="rfc.section.2.6.p.5">A log file, for example, grows over time. Instead of having to re-FLIC the grown file it suffices to construct a new manifest with a manifest pointer to the old root manifest plus the sequence of data hash pointers for the new data (or additional sub-manifests if necessary).  Note that this tree will not be skewed (anymore).</p>
+<h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#advanced-uses-of-flic-manifests" id="advanced-uses-of-flic-manifests">Advanced uses of FLIC manifests</a></h1>
+<p id="rfc.section.3.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects:</p>
+<h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#block-level-de-duplification" id="block-level-de-duplification">Block-level de-duplification</a></h1>
+<p id="rfc.section.3.1.p.1">Consider a huge file, e.g. an ISO image of a DVD or program in binary form, that had previously been FLIC-ed but now needs to be patched.  In this case, all existing encoded ICN chunks can remain in the repository while only the chunks for the patch itself is added to a new manifest data structure, as is shown in the picture below.</p>
+<pre>
+old_mfst -  - &gt; h1 --&gt; oldData1  &lt;-- h1 &lt; -  -  new_mfst
+         \  - &gt; h2 --&gt; oldData2  &lt;-- h2 &lt; -  - /
+          \            replace3  &lt;-- h5 &lt; -  -/
+           \- &gt; h3 --&gt; oldData3              /
+            \ &gt; h4 --&gt; oldData4  &lt;-- h4 &lt; - /
+</pre>
+<h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#growing-icn-collections" id="growing-icn-collections">Growing ICN collections</a></h1>
+<p id="rfc.section.3.2.p.1">A log file, for example, grows over time. Instead of having to re-FLIC the grown file it suffices to construct a new manifest with a manifest pointer to the old root manifest plus the sequence of data hash pointers for the new data (or additional sub-manifests if necessary).  Note that this tree will not be skewed (anymore).</p>
 <pre>
 old data &lt; -  -  -  mfst_old &lt;-- h_old -  - mfst_new
                                             /
@@ -669,29 +684,71 @@ new data2                                 /
 ...                                      /
 new dataN &lt;-- h_N -  -  -  -  -  -  -  -/
 </pre>
-<p id="rfc.section.2.6.p.6">c) Republishing a FLIC under a new name</p>
-<p id="rfc.section.2.6.p.7">It can happen that a publisher&#8217;s namespace is part of a service provider&#8217;s prefix. When switching provider, the publisher may want to republish the old data under a new name. This can easily be achieved with a single nameless root manifest for the large FLIC plus arbitrarily many per-name manifests (which are signed by whomever wants to publish this data):</p>
+<h1 id="rfc.section.3.3"><a href="#rfc.section.3.3">3.3.</a> <a href="#re-publishing-a-flic-under-a-new-name" id="re-publishing-a-flic-under-a-new-name">Re-publishing a FLIC under a new name</a></h1>
+<p id="rfc.section.3.3.p.1">It can happen that a publisher&#8217;s namespace is part of a service provider&#8217;s prefix. When switching provider, the publisher may want to republish the old data under a new name. This can easily be achieved with a single nameless root manifest for the large FLIC plus arbitrarily many per-name manifests (which are signed by whomever wants to publish this data):</p>
 <pre>
-data &lt; - nameless_mfst() &lt;-- h  &lt; - -  mfst(/com/parc/east/the/flic)
-                                &lt; - -  mfst(/com/parc/west/old/the/flic)
-                                &lt; - -  mfst(/internet/archive/flic234)
+   data &lt; - nameless_mfst() &lt;-- h  &lt; - mfst(/com/parc/east/the/flic)
+                                   &lt; - mfst(/com/parc/west/old/the/flic)
+                                   &lt; - mfst(/internet/archive/flic234)
 </pre>
-<p id="rfc.section.2.6.p.8">Note that the hash computation (of h) only requires reading the nameless root manifest, not the entire FLIC.</p>
-<p id="rfc.section.2.6.p.9">This example points out the problem of HashGroups having locator metadata elements: A retriever would be urged to follow these hints which are &#8220;hardcoded&#8221; in the FLIC but might have become outdated. We therefore recommend to name FLIC manifests only at the highest level where these names have no locator function. Child nodes in a FLIC manifest should not be named as they serve no purpose (except retrieving a sub-tree&#8217;s manifest by name, if this required).</p>
-<p id="rfc.section.2.6.p.10">d) Data Chunks of variable size</p>
-<p id="rfc.section.2.6.p.11">If chunks do not have regular (block) sizes, the HashGroup can be used to still convey to a reader the length of the chunks, at manifest level. An example would be chunks each carrying a single ASCII line as entered by a user, or a database with variable length records mapped to chunks.</p>
+<p id="rfc.section.3.3.p.2">Note that the hash computation (of h) only requires reading the nameless root manifest, not the entire FLIC.</p>
+<p id="rfc.section.3.3.p.3">This example points out the problem of HashGroups having locator metadata elements: A retriever would be urged to follow these hints which are &#8220;hardcoded&#8221; deep inside the FLIC but might have become outdated. We therefore recommend to name FLIC manifests only at the highest level (where these names have no locator function). Child nodes in a FLIC manifest should not be named as these names serve no purpose except retrieving a sub-tree&#8217;s manifest by name, if would be required.</p>
+<h1 id="rfc.section.3.4"><a href="#rfc.section.3.4">3.4.</a> <a href="#data-chunks-of-variable-size" id="data-chunks-of-variable-size">Data Chunks of variable size</a></h1>
+<p id="rfc.section.3.4.p.1">If chunks do not have regular (block) sizes, the HashGroup can be used to still convey to a reader the length of the chunks, at manifest level. Example use cases would be chunks each carrying a single ASCII line as entered by a user, or a database with variable length records mapped to chunks.</p>
 <pre>
-M = manifest(hashgroup(metadata(blocksize=12), dataptr=h1),
-             hashgroup(metadata(blocksize=1), dataptr=h2),
-             ...)
+M = (manifest
+      (hashgroup((metadata(blocksize=12)) (dataptr=h1))
+      (hashgroup((metadata(blocksize=1)) (dataptr=h2))
+      ...
+    )
 </pre>
-<h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#encoding" id="encoding">Encoding</a></h1>
-<h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#encoding-for-ccnx" id="encoding-for-ccnx">Encoding for CCNx</a></h1>
-<p id="rfc.section.3.1.p.1">use objHashRestriction as selector</p>
-<p id="rfc.section.3.1.p.2">how pointers etc are encoded in TLV &#8230;</p>
-<h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#encoding-for-ndn" id="encoding-for-ndn">Encoding for NDN</a></h1>
-<p id="rfc.section.3.2.p.1">use implicitDigest name component as selector</p>
-<p id="rfc.section.3.2.p.2">how pointers etc are encoded in TLV &#8230;</p>
+<h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> <a href="#encoding" id="encoding">Encoding</a></h1>
+<p id="rfc.section.4.p.1">We express the packet encoding of manifests in a symbolic expression style in order to show the TLV structure and the chosen type values. In this notation, a TLV&#8217;s type is a combination of &#8220;SymbolicName/Tvalue&#8221;, Length is not shown and Values are sub-expressions. Moreover, we populate the data structure with all possible entries and omit repetition. An abbreviated example for the NDN Interest packet would be:</p>
+<pre>
+(Interest/0x5
+  (Name/0x7 (NameComp=0x8 ...) ...)
+  (Selector/0x9 ...)
+  (Nonce/0xA BLOB)
+  (Scope/0xB INT)
+  (InterestLifeTime/0xC INT)
+)
+</pre>
+<h1 id="rfc.section.4.1"><a href="#rfc.section.4.1">4.1.</a> <a href="#encoding-for-ccnx10" id="encoding-for-ccnx10">Encoding for CCNx1.0</a></h1>
+<pre>
+(ManifestMsg/0x6
+  (Name/0x0 ...)
+  (HashGroup/0x1
+     (MetaData/0x1
+        (LocatorNm/0x0 (NameComp/0x ...))
+        (BlockSize/0x2 INT)
+        (TotalSize/0x3 INT)
+        (TotalHash/0x4 OCTET[32])
+     )
+     (DataPtr/0x2 OCTET[32])
+     (MfstPtr/0x3 OCTET[32])
+  )
+)
+</pre>
+<p id="rfc.section.4.1.p.1">Interest: name is locator, use objHashRestriction as selector</p>
+<h1 id="rfc.section.4.2"><a href="#rfc.section.4.2">4.2.</a> <a href="#encoding-for-ndn" id="encoding-for-ndn">Encoding for NDN</a></h1>
+<pre>
+(ManifestMsg/0xC0
+  (Name/0x7 ...)
+  (HashGroup/0xC1
+     (MetaData/0xC4
+        (LocatorNm/0xC5 (NameComp/0x8 ...))
+        (BlockSize/0xC7 INT)
+        (TotalSize/0xC8 INT)
+        (TotalHash/0xC9 OCTET[32])
+     )
+     (DataPtr/0xC2 OCTET[32])
+     (MfstPtr/0xC3 OCTET[32])
+  )
+  (SignatureInfo/0x16 ...)
+  (SignatureValue/0x17 ...)
+)
+</pre>
+<p id="rfc.section.4.2.p.1">Interest: name is locator, use implicitDigest name component as selector</p>
 <h1 id="rfc.authors">
   <a href="#rfc.authors">Author's Address</a>
 </h1>

@@ -67,23 +67,52 @@ Table of Contents
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
      1.1.  FLIC as a Distributed Data Structure  . . . . . . . . . .   2
      1.2.  Design goals  . . . . . . . . . . . . . . . . . . . . . .   3
-   2.  File-Like ICN Collection (FLIC) Format  . . . . . . . . . . .   3
+   2.  File-Like ICN Collection (FLIC) Format  . . . . . . . . . . .   4
      2.1.  Use of hash-valued pointers . . . . . . . . . . . . . . .   4
-     2.2.  Creating a FLIC data structure  . . . . . . . . . . . . .   4
-     2.3.  Reconstructing the collection's data  . . . . . . . . . .   5
-     2.4.  Metadata in HashGroups  . . . . . . . . . . . . . . . . .   6
-     2.5.  Locating FLIC leaf and manifest nodes . . . . . . . . . .   7
-     2.6.  Advanced uses of FLIC manifests . . . . . . . . . . . . .   8
-   3.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .   9
-     3.1.  Encoding for CCNx . . . . . . . . . . . . . . . . . . . .   9
-     3.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .   9
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   9
+     2.2.  Creating a FLIC data structure  . . . . . . . . . . . . .   5
+     2.3.  Reconstructing the collection's data  . . . . . . . . . .   6
+     2.4.  Metadata in HashGroups  . . . . . . . . . . . . . . . . .   7
+     2.5.  Locating FLIC leaf and manifest nodes . . . . . . . . . .   8
+   3.  Advanced uses of FLIC manifests . . . . . . . . . . . . . . .   9
+     3.1.  Block-level de-duplification  . . . . . . . . . . . . . .   9
+     3.2.  Growing ICN collections . . . . . . . . . . . . . . . . .   9
+     3.3.  Re-publishing a FLIC under a new name . . . . . . . . . .  10
+     3.4.  Data Chunks of variable size  . . . . . . . . . . . . . .  10
+   4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  10
+     4.1.  Encoding for CCNx1.0  . . . . . . . . . . . . . . . . . .  11
+     4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  11
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  12
 
 1.  Introduction
 
 1.1.  FLIC as a Distributed Data Structure
 
    One figure
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tschudin                  Expires June 1, 2016                  [Page 2]
+
+Internet-Draft                  ICN-FLIC                   November 2015
+
 
                             root manifest
     .------------------------------------.
@@ -105,15 +134,6 @@ Table of Contents
 
          Figure 1: A FLIC manifest and its directed acyclic graph
 
-
-
-
-
-Tschudin                  Expires June 1, 2016                  [Page 2]
-
-Internet-Draft                  ICN-FLIC                   November 2015
-
-
 1.2.  Design goals
 
    o  Copy the proven UNIX inode concept:
@@ -133,8 +153,8 @@ Internet-Draft                  ICN-FLIC                   November 2015
       *  eliminate reference to chunk numbering schemata (hash values
          only)
 
-      *  supports block-level deduplification (leads to a directed
-         acyclic graph, or DAG)
+      *  supports block-level deduplification (can lead to a directed
+         acyclic graph, or DAG, instead of a tree)
 
    o  Limitations
 
@@ -142,6 +162,13 @@ Internet-Draft                  ICN-FLIC                   November 2015
          (otherwise one cannot compute the pointers)
 
    o  Potential extensions (for study):
+
+
+
+Tschudin                  Expires June 1, 2016                  [Page 3]
+
+Internet-Draft                  ICN-FLIC                   November 2015
+
 
       *  Enhance the manifest such that it can serve as a "database
          cursor" or as a cursor over a time series, e.g. having entries
@@ -162,13 +189,6 @@ Internet-Draft                  ICN-FLIC                   November 2015
                      OverallDataSHA256Digest | ...
 
    Description:
-
-
-
-Tschudin                  Expires June 1, 2016                  [Page 3]
-
-Internet-Draft                  ICN-FLIC                   November 2015
-
 
    o  The core of a manifest is the sequence of "hash groups".
 
@@ -198,6 +218,14 @@ Internet-Draft                  ICN-FLIC                   November 2015
    such an object consists of a routing hint (locator) plus the given
    digest value.
 
+
+
+
+Tschudin                  Expires June 1, 2016                  [Page 4]
+
+Internet-Draft                  ICN-FLIC                   November 2015
+
+
 2.2.  Creating a FLIC data structure
 
    Starting from the original content, the corresponding byte array is
@@ -218,14 +246,6 @@ Internet-Draft                  ICN-FLIC                   November 2015
    ...                              /
    dataN <-- hN  -  -  -  -  -  -  /
 
-
-
-
-Tschudin                  Expires June 1, 2016                  [Page 4]
-
-Internet-Draft                  ICN-FLIC                   November 2015
-
-
    Of special interest are "skewed trees" where a pointer to a manifest
    may only appear as last pointer of (sub-) manifests.  Such a tree
    becomes a sequential list of manifests and is well suited for
@@ -243,6 +263,24 @@ Internet-Draft                  ICN-FLIC                   November 2015
    the pointer to the next manifest to keep the pipeline filled.
 
    A pseudo code description for producing a skewed tree follows below.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tschudin                  Expires June 1, 2016                  [Page 5]
+
+Internet-Draft                  ICN-FLIC                   November 2015
+
 
    Input:
        Application data D of size |D| (bytes)
@@ -275,14 +313,30 @@ Internet-Draft                  ICN-FLIC                   November 2015
    represented as the concatenation of data leaves from this "depth-
    first search" (DFS) traversal strategy of the manifest tree.
 
+   A pseudo code description for fetching is below.
 
 
-Tschudin                  Expires June 1, 2016                  [Page 5]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tschudin                  Expires June 1, 2016                  [Page 6]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
-
-   A pseudo code description for fetching is below.
 
    Input:
        Root manifest R
@@ -333,7 +387,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 6]
+
+
+Tschudin                  Expires June 1, 2016                  [Page 7]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -389,7 +445,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 7]
+Tschudin                  Expires June 1, 2016                  [Page 8]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -406,16 +462,26 @@ Internet-Draft                  ICN-FLIC                   November 2015
      interest(name=/x/y/z, implicitDigest=h1)
      interest(name=/the/locator/hint, implicitDigest=h2)
 
-2.6.  Advanced uses of FLIC manifests
+3.  Advanced uses of FLIC manifests
 
    The FLIC mechanics has uses cases beyond keeping together a set of
    data objects:
 
-   a) dedup
+3.1.  Block-level de-duplification
 
-   .. to be written ..
+   Consider a huge file, e.g. an ISO image of a DVD or program in binary
+   form, that had previously been FLIC-ed but now needs to be patched.
+   In this case, all existing encoded ICN chunks can remain in the
+   repository while only the chunks for the patch itself is added to a
+   new manifest data structure, as is shown in the picture below.
 
-   b) Growing ICN collections
+   old_mfst -  - > h1 --> oldData1  <-- h1 < -  -  new_mfst
+            \  - > h2 --> oldData2  <-- h2 < -  - /
+             \            replace3  <-- h5 < -  -/
+              \- > h3 --> oldData3              /
+               \ > h4 --> oldData4  <-- h4 < - /
+
+3.2.  Growing ICN collections
 
    A log file, for example, grows over time.  Instead of having to re-
    FLIC the grown file it suffices to construct a new manifest with a
@@ -430,7 +496,17 @@ Internet-Draft                  ICN-FLIC                   November 2015
    ...                                      /
    new dataN <-- h_N -  -  -  -  -  -  -  -/
 
-   c) Republishing a FLIC under a new name
+
+
+
+
+
+Tschudin                  Expires June 1, 2016                  [Page 9]
+
+Internet-Draft                  ICN-FLIC                   November 2015
+
+
+3.3.  Re-publishing a FLIC under a new name
 
    It can happen that a publisher's namespace is part of a service
    provider's prefix.  When switching provider, the publisher may want
@@ -439,53 +515,108 @@ Internet-Draft                  ICN-FLIC                   November 2015
    arbitrarily many per-name manifests (which are signed by whomever
    wants to publish this data):
 
-data < - nameless_mfst() <-- h  < - -  mfst(/com/parc/east/the/flic)
-                                < - -  mfst(/com/parc/west/old/the/flic)
-                                < - -  mfst(/internet/archive/flic234)
-
-
-
-Tschudin                  Expires June 1, 2016                  [Page 8]
-
-Internet-Draft                  ICN-FLIC                   November 2015
-
+   data < - nameless_mfst() <-- h  < - mfst(/com/parc/east/the/flic)
+                                   < - mfst(/com/parc/west/old/the/flic)
+                                   < - mfst(/internet/archive/flic234)
 
    Note that the hash computation (of h) only requires reading the
    nameless root manifest, not the entire FLIC.
 
    This example points out the problem of HashGroups having locator
    metadata elements: A retriever would be urged to follow these hints
-   which are "hardcoded" in the FLIC but might have become outdated.  We
-   therefore recommend to name FLIC manifests only at the highest level
-   where these names have no locator function.  Child nodes in a FLIC
-   manifest should not be named as they serve no purpose (except
-   retrieving a sub-tree's manifest by name, if this required).
+   which are "hardcoded" deep inside the FLIC but might have become
+   outdated.  We therefore recommend to name FLIC manifests only at the
+   highest level (where these names have no locator function).  Child
+   nodes in a FLIC manifest should not be named as these names serve no
+   purpose except retrieving a sub-tree's manifest by name, if would be
+   required.
 
-   d) Data Chunks of variable size
+3.4.  Data Chunks of variable size
 
    If chunks do not have regular (block) sizes, the HashGroup can be
    used to still convey to a reader the length of the chunks, at
-   manifest level.  An example would be chunks each carrying a single
-   ASCII line as entered by a user, or a database with variable length
-   records mapped to chunks.
+   manifest level.  Example use cases would be chunks each carrying a
+   single ASCII line as entered by a user, or a database with variable
+   length records mapped to chunks.
 
-   M = manifest(hashgroup(metadata(blocksize=12), dataptr=h1),
-                hashgroup(metadata(blocksize=1), dataptr=h2),
-                ...)
+   M = (manifest
+         (hashgroup((metadata(blocksize=12)) (dataptr=h1))
+         (hashgroup((metadata(blocksize=1)) (dataptr=h2))
+         ...
+       )
 
-3.  Encoding
+4.  Encoding
 
-3.1.  Encoding for CCNx
+   We express the packet encoding of manifests in a symbolic expression
+   style in order to show the TLV structure and the chosen type values.
+   In this notation, a TLV's type is a combination of "SymbolicName/
+   Tvalue", Length is not shown and Values are sub-expressions.
+   Moreover, we populate the data structure with all possible entries
+   and omit repetition.  An abbreviated example for the NDN Interest
+   packet would be:
 
-   use objHashRestriction as selector
 
-   how pointers etc are encoded in TLV ...
 
-3.2.  Encoding for NDN
+Tschudin                  Expires June 1, 2016                 [Page 10]
+
+Internet-Draft                  ICN-FLIC                   November 2015
 
-   use implicitDigest name component as selector
 
-   how pointers etc are encoded in TLV ...
+   (Interest/0x5
+     (Name/0x7 (NameComp=0x8 ...) ...)
+     (Selector/0x9 ...)
+     (Nonce/0xA BLOB)
+     (Scope/0xB INT)
+     (InterestLifeTime/0xC INT)
+   )
+
+4.1.  Encoding for CCNx1.0
+
+   (ManifestMsg/0x6
+     (Name/0x0 ...)
+     (HashGroup/0x1
+        (MetaData/0x1
+           (LocatorNm/0x0 (NameComp/0x ...))
+           (BlockSize/0x2 INT)
+           (TotalSize/0x3 INT)
+           (TotalHash/0x4 OCTET[32])
+        )
+        (DataPtr/0x2 OCTET[32])
+        (MfstPtr/0x3 OCTET[32])
+     )
+   )
+
+   Interest: name is locator, use objHashRestriction as selector
+
+4.2.  Encoding for NDN
+
+   (ManifestMsg/0xC0
+     (Name/0x7 ...)
+     (HashGroup/0xC1
+        (MetaData/0xC4
+           (LocatorNm/0xC5 (NameComp/0x8 ...))
+           (BlockSize/0xC7 INT)
+           (TotalSize/0xC8 INT)
+           (TotalHash/0xC9 OCTET[32])
+        )
+        (DataPtr/0xC2 OCTET[32])
+        (MfstPtr/0xC3 OCTET[32])
+     )
+     (SignatureInfo/0x16 ...)
+     (SignatureValue/0x17 ...)
+   )
+
+   Interest: name is locator, use implicitDigest name component as
+   selector
+
+
+
+
+
+Tschudin                  Expires June 1, 2016                 [Page 11]
+
+Internet-Draft                  ICN-FLIC                   November 2015
+
 
 Author's Address
 
@@ -501,4 +632,41 @@ Author's Address
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 9]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tschudin                  Expires June 1, 2016                 [Page 12]

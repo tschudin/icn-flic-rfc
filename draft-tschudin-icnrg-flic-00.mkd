@@ -94,8 +94,8 @@ Design goals
   * single root manifest signature covers all elements of the full
     collection, including intermediate sub manifests
   * eliminate reference to chunk numbering schemata (hash values only)
-  * supports block-level deduplification (leads to a directed acyclic
-    graph, or DAG)
+  * supports block-level deduplification (can lead to a directed acyclic
+    graph, or DAG, instead of a tree)
 
 * Limitations
   * All data leafs must be present at manifest creation time
@@ -344,16 +344,30 @@ Queries:
 
 
 Advanced uses of FLIC manifests
--------------------------------
+===============================
 
 The FLIC mechanics has uses cases beyond keeping together a set of
 data objects:
 
-a) dedup
+Block-level de-duplification
+----------------------------
 
-.. to be written ..
+Consider a huge file, e.g. an ISO image of a DVD or program in binary
+form, that had previously been FLIC-ed but now needs to be patched.
+In this case, all existing encoded ICN chunks can remain in the
+repository while only the chunks for the patch itself is added to a
+new manifest data structure, as is shown in the picture below.
 
-b) Growing ICN collections
+~~~
+old_mfst -  - > h1 --> oldData1  <-- h1 < -  -  new_mfst
+         \  - > h2 --> oldData2  <-- h2 < -  - /
+          \            replace3  <-- h5 < -  -/
+           \- > h3 --> oldData3              /
+            \ > h4 --> oldData4  <-- h4 < - /
+~~~
+
+Growing ICN collections
+-----------------------
 
 A log file, for example, grows over time. Instead of having to re-FLIC
 the grown file it suffices to construct a new manifest with a manifest
@@ -370,7 +384,8 @@ new data2                                 /
 new dataN <-- h_N -  -  -  -  -  -  -  -/
 ~~~
 
-c) Republishing a FLIC under a new name
+Re-publishing a FLIC under a new name
+-------------------------------------
 
 It can happen that a publisher's namespace is part of a service
 provider's prefix. When switching provider, the publisher may want to
@@ -380,9 +395,9 @@ per-name manifests (which are signed by whomever wants to publish this
 data):
 
 ~~~
-data < - nameless_mfst() <-- h  < - -  mfst(/com/parc/east/the/flic)
-                                < - -  mfst(/com/parc/west/old/the/flic)
-                                < - -  mfst(/internet/archive/flic234)
+   data < - nameless_mfst() <-- h  < - mfst(/com/parc/east/the/flic)
+                                   < - mfst(/com/parc/west/old/the/flic)
+                                   < - mfst(/internet/archive/flic234)
 ~~~
 
 Note that the hash computation (of h) only requires reading the
@@ -390,44 +405,94 @@ nameless root manifest, not the entire FLIC.
 
 This example points out the problem of HashGroups having locator
 metadata elements: A retriever would be urged to follow these hints
-which are "hardcoded" in the FLIC but might have become outdated. We
-therefore recommend to name FLIC manifests only at the highest level
-where these names have no locator function. Child nodes in a FLIC
-manifest should not be named as they serve no purpose (except
-retrieving a sub-tree's manifest by name, if this required).
+which are "hardcoded" deep inside the FLIC but might have become
+outdated. We therefore recommend to name FLIC manifests only at the
+highest level (where these names have no locator function). Child
+nodes in a FLIC manifest should not be named as these names serve no
+purpose except retrieving a sub-tree's manifest by name, if would be
+required.
 
-d) Data Chunks of variable size
+Data Chunks of variable size
+----------------------------
 
 If chunks do not have regular (block) sizes, the HashGroup can be used
 to still convey to a reader the length of the chunks, at manifest
-level. An example would be chunks each carrying a single ASCII line as
+level. Example use cases would be chunks each carrying a single ASCII line as
 entered by a user, or a database with variable length records mapped
 to chunks.
 
 ~~~
-M = manifest(hashgroup(metadata(blocksize=12), dataptr=h1),
-             hashgroup(metadata(blocksize=1), dataptr=h2),
-             ...)
+M = (manifest
+      (hashgroup((metadata(blocksize=12)) (dataptr=h1))
+      (hashgroup((metadata(blocksize=1)) (dataptr=h2))
+      ...
+    )
 ~~~
 
 Encoding
 ========
 
-Encoding for CCNx
------------------
+We express the packet encoding of manifests in a symbolic expression
+style in order to show the TLV structure and the chosen type
+values. In this notation, a TLV's type is a combination of
+"SymbolicName/Tvalue", Length is not shown and Values are
+sub-expressions. Moreover, we populate the data structure with all
+possible entries and omit repetition. An abbreviated example for the
+NDN Interest packet would be:
 
-use objHashRestriction as selector
+~~~
+(Interest/0x5
+  (Name/0x7 (NameComp=0x8 ...) ...)
+  (Selector/0x9 ...)
+  (Nonce/0xA BLOB)
+  (Scope/0xB INT)
+  (InterestLifeTime/0xC INT)
+)
+~~~
 
-how pointers etc are encoded in TLV ...
+Encoding for CCNx1.0
+--------------------
+
+~~~
+(ManifestMsg/0x6
+  (Name/0x0 ...)
+  (HashGroup/0x1
+     (MetaData/0x1
+        (LocatorNm/0x0 (NameComp/0x ...))
+        (BlockSize/0x2 INT)
+        (TotalSize/0x3 INT)
+        (TotalHash/0x4 OCTET[32])
+     )
+     (DataPtr/0x2 OCTET[32])
+     (MfstPtr/0x3 OCTET[32])
+  )
+)
+~~~
+
+Interest: name is locator, use objHashRestriction as selector
 
 
 Encoding for NDN
 ----------------
 
-use implicitDigest name component as selector
+~~~
+(ManifestMsg/0xC0
+  (Name/0x7 ...)
+  (HashGroup/0xC1
+     (MetaData/0xC4
+        (LocatorNm/0xC5 (NameComp/0x8 ...))
+        (BlockSize/0xC7 INT)
+        (TotalSize/0xC8 INT)
+        (TotalHash/0xC9 OCTET[32])
+     )
+     (DataPtr/0xC2 OCTET[32])
+     (MfstPtr/0xC3 OCTET[32])
+  )
+  (SignatureInfo/0x16 ...)
+  (SignatureValue/0x17 ...)
+)
+~~~
 
-how pointers etc are encoded in TLV ...
-
-
+Interest: name is locator, use implicitDigest name component as selector
 
 --- back
