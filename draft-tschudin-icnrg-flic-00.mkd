@@ -66,7 +66,7 @@ One figure
   | optional name:                     |
   |   /icn/name/of/this/flic           |
   |                                    |
-  | hashgroup:                         |
+  | HashGroup:                         |
   |   optional metadata:               |
   |     block size, total tree size,   |       leaf
   |     overall digest, locator, etc.  |    .------.
@@ -74,7 +74,7 @@ One figure
   |     ...                            |    `------'  sub manifest
   |   hash-valued manifest pointer ------.     .------------------.
   |                                    |  `--> |                ----->
-  | optional additional hashgroups ..  |       |                ----->
+  | optional additional HashGroups ..  |       |                ----->
   |                                    |       `------------------'
   | optional signature                 |
   `------------------------------------'
@@ -92,13 +92,13 @@ Design goals
 
 * Advantages (over non-manifest collections):
   * single root manifest signature covers all elements of the full
-    collection, including intermediate sub manifests.
+    collection, including intermediate sub manifests
   * eliminate reference to chunk numbering schemata (hash values only)
   * supports block-level deduplification (leads to a directed acyclic
     graph, or DAG)
 
 * Limitations
-  * all data leafs must be present at manifest creation time
+  * All data leafs must be present at manifest creation time
     (otherwise one cannot compute the pointers)
 
 * Potential extensions (for study):
@@ -110,7 +110,7 @@ Design goals
 File-Like ICN Collection (FLIC) Format
 ======================================
 
-We first give the FLIC format in EBN:
+We first give the FLIC format in EBN notation:
 
 ~~~
    ManifestMsg := Name? HashGroup+
@@ -130,11 +130,12 @@ Description:
 
 * A HashGroup consists of a sequence of data or manifest pointers.
 
-* Data and manifest pointers have distinct types.
+* Data as well as manifest pointers are SHA256 digests (32 Bytes);
+  their encoding assigns them distinct types.
 
-* A HashGroup can contain a meta data section to help a
-  reader to optimize content retrieval (block size of
-  leaf nodes, total size, overall digest etc).
+* A HashGroup can contain a metadata section to help a reader to
+  optimize content retrieval (block size of leaf nodes, total size,
+  overall digest etc).
 
 * None of the ICN objects used in FLIC are allowed to be chunked,
   including the (sub-) manifests. The smallest possible complete
@@ -155,8 +156,8 @@ with fetching an object based on its digest only. The interest for
 such an object consists of a routing hint (locator) plus the given
 digest value.
 
-Creating the FLIC
------------------
+Creating a FLIC data structure
+------------------------------
 
 Starting from the original content, the corresponding byte array is
 sliced into chunks (of equal size if blocksize is present in the
@@ -193,10 +194,10 @@ dataN   <-- hN  - /
 ~~~
 
 A side effect of skewed trees is that the retriever receives a maximum
-of data pointers that can be retrieve in parallel, including the
-pointer to the next manifest to keep the pipeline busy.
+of data pointers that can be retrieved in parallel, including the
+pointer to the next manifest to keep the pipeline filled.
 
-A pseudocode description for producing a skewed tree follows below.
+A pseudo code description for producing a skewed tree follows below.
 
 ~~~
 Input:
@@ -204,20 +205,20 @@ Input:
     Block size B (in bytes)
 Output:
     FLIC root node R
-
-n = number of leaf nodes = ceil(|D| / B)
-k = number of (encoded) hash values fitting in a block of size B
-H[1..n] = array of hash values
-  initialized with the data hash values for data chunks 1..n
-While n > k do
-  a)  create manifest M
-  b)  add to a hashgroup in M all hash values H[n-k+1..n]
-  c)  n = n - k + 1
-  d)  H[n] = manifest hash value of M
-Create root manifest R
-Add to a hashgroup of R all hash values H[1..n]
-Optionally: add name to R, sign manifest R
-Output R
+Algo:
+    n = number of leaf nodes = ceil(|D| / B)
+    k = number of (encoded) hash values fitting in a block of size B
+    H[1..n] = array of hash values
+      initialized with the data hash values for data chunks 1..n
+    While n > k do
+      a)  create manifest M with a HashGroup
+      b)  append to the HashGroup in M all hash values H[n-k+1..n]
+      c)  n = n - k + 1
+      d)  H[n] = manifest hash value of M
+    Create root manifest R with a HashGroup
+    Add to the HashGroup of R all hash values H[1..n]
+    Optionally: add name to R, sign manifest R
+    Output R
 ~~~
 
 
@@ -225,23 +226,30 @@ Reconstructing the collection's data
 ------------------------------------
 
 To fetch the data associated with a given FLIC (sub-) manifest, the
-receiver sequentially works through all entries found in the hash
-groups and issues corresponding hash-based interests. In case of a
+receiver sequentially works through all entries found in the
+HashGroups and issues corresponding hash-based interests. In case of a
 data hash pointer, the received content object is appended. In case of
 a manifest hash pointer, this procedure is called recursively for the
 received manifest. In other words, the collection data is represented
 as the concatenation of data leaves from this "depth-first search"
 (DFS) traversal strategy of the manifest tree.
 
-A pseudocode description for fetching is below.
+A pseudo code description for fetching is below.
 
 ~~~
 Input:
-    Root manifest M
+    Root manifest R
 Output:
     Application data D
+Algo:
+    global D = []
+    DFS(R)
+    Output D
 
-D = []
+where:
+
+procedure DFS(M)
+{
 L:
   H = sequence of hash valued pointers of M
   foreach p in H do:
@@ -253,17 +261,17 @@ L:
       if p is last element in H then
         goto L;   // tail recursion
       DFS(M)
-Output D
+}
 ~~~
 
 The above DFS code works for FLIC manifest trees of arbitrary
 shape. In case of a skewed tree, no recursion is needed and a single
 instance of the DFS procedure suffices (tail recursion).
 
-Metadata in Hash Groups
------------------------
+Metadata in HashGroups
+----------------------
 
-In FLIC, metadata is linked to hash groups and permits to inform the
+In FLIC, metadata is linked to HashGroups and permits to inform the
 FLIC retriever about properties of the data that is covered by this hash
 group. Examples are overall data bytes or the block size used at
 production time. The intent of such metadata is to enable an
@@ -284,9 +292,9 @@ The list of available metadata is below.
   reconstruction of the subtree associated with this hash group
   (before having reconstructed the full signed FLIC)
 
-* locator value - provides a new routing hint (name prefix) where the chunks
-  of this hash group can be retrieved from. The default is to use
-  the locator of the root manifest.
+* locator value - provides a new routing hint (name prefix) where the
+  chunks of this hash group can be retrieved from. The default is to
+  use the locator of the root manifest.
 ~~~
 
 Locating FLIC leaf and manifest nodes
@@ -295,7 +303,7 @@ Locating FLIC leaf and manifest nodes
 The optional name of a manifest is a mere decoration and has no locator
 functionality at all: All objects pointed to by a manifest are
 retrieved from the location where the manifest itself was obtained
-from. Example:
+from (which is not necessarily its name). Example:
 
 ~~~
 Objects:
@@ -354,7 +362,6 @@ pointers for the new data (or additional sub-manifests if necessary).
 Note that this tree will not be skewed (anymore).
 
 ~~~
-
 old data < -  -  -  mfst_old <-- h_old -  - mfst_new
                                             /
 new data1 <-- h_1 -  -  -  -  -  -  -  -  -/
@@ -381,12 +388,27 @@ data < - nameless_mfst() <-- h  < - -  mfst(/com/parc/east/the/flic)
 Note that the hash computation (of h) only requires reading the
 nameless root manifest, not the entire FLIC.
 
-This example points out the problem of hash groups having locator
+This example points out the problem of HashGroups having locator
 metadata elements: A retriever would be urged to follow these hints
 which are "hardcoded" in the FLIC but might have become outdated. We
 therefore recommend to name FLIC manifests only at the highest level
-where these names have no locator function. Child nodes in a FLIC manifest
-should not be named.
+where these names have no locator function. Child nodes in a FLIC
+manifest should not be named as they serve no purpose (except
+retrieving a sub-tree's manifest by name, if this required).
+
+d) Data Chunks of variable size
+
+If chunks do not have regular (block) sizes, the HashGroup can be used
+to still convey to a reader the length of the chunks, at manifest
+level. An example would be chunks each carrying a single ASCII line as
+entered by a user, or a database with variable length records mapped
+to chunks.
+
+~~~
+M = manifest(hashgroup(metadata(blocksize=12), dataptr=h1),
+             hashgroup(metadata(blocksize=1), dataptr=h2),
+             ...)
+~~~
 
 Encoding
 ========
