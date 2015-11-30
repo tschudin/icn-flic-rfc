@@ -5,7 +5,7 @@
 <head profile="http://www.w3.org/2006/03/hcard http://dublincore.org/documents/2008/08/04/dc-html/">
   <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 
-  <title>ICN File-Like Collection (FLIC)</title>
+  <title>File-Like ICN Collection (FLIC)</title>
 
   <style type="text/css" title="Xml2Rfc (sans serif)">
   /*<![CDATA[*/
@@ -377,29 +377,27 @@
 <link href="#rfc.section.1" rel="Chapter" title="1 Introduction"/>
 <link href="#rfc.section.1.1" rel="Chapter" title="1.1 FLIC as a Distributed Data Structure"/>
 <link href="#rfc.section.1.2" rel="Chapter" title="1.2 Design goals"/>
-<link href="#rfc.section.2" rel="Chapter" title="2 File-LIke Collection (FLIC) Format"/>
-<link href="#rfc.section.2.1" rel="Chapter" title="2.1 FLIC format in EBN"/>
-<link href="#rfc.section.2.2" rel="Chapter" title="2.2 Use of hash-valued pointers"/>
-<link href="#rfc.section.2.3" rel="Chapter" title="2.3 Creating the FLIC"/>
-<link href="#rfc.section.2.4" rel="Chapter" title="2.4 Reconstructing the collection&#x2019;s data"/>
-<link href="#rfc.section.2.5" rel="Chapter" title="2.5 Metadata"/>
+<link href="#rfc.section.2" rel="Chapter" title="2 File-Like ICN Collection (FLIC) Format"/>
+<link href="#rfc.section.2.1" rel="Chapter" title="2.1 Use of hash-valued pointers"/>
+<link href="#rfc.section.2.2" rel="Chapter" title="2.2 Creating the FLIC"/>
+<link href="#rfc.section.2.3" rel="Chapter" title="2.3 Reconstructing the collection&#x2019;s data"/>
+<link href="#rfc.section.2.4" rel="Chapter" title="2.4 Metadata in Hash Groups"/>
+<link href="#rfc.section.2.5" rel="Chapter" title="2.5 Locating FLIC leaf and manifest nodes"/>
+<link href="#rfc.section.2.6" rel="Chapter" title="2.6 Advanced uses of FLIC manifests"/>
 <link href="#rfc.section.3" rel="Chapter" title="3 Encoding"/>
 <link href="#rfc.section.3.1" rel="Chapter" title="3.1 Encoding for CCNx"/>
 <link href="#rfc.section.3.2" rel="Chapter" title="3.2 Encoding for NDN"/>
-<link href="#rfc.section.3.3" rel="Chapter" title="3.3 No chunking"/>
-<link href="#rfc.section.3.4" rel="Chapter" title="3.4 Encoding strategies"/>
-<link href="#rfc.section.3.5" rel="Chapter" title="3.5 Appending to a FLIC"/>
 <link href="#rfc.authors" rel="Chapter"/>
 
 
-  <meta name="generator" content="xml2rfc version 2.5.1 - http://tools.ietf.org/tools/xml2rfc" />
+  <meta name="generator" content="xml2rfc version 2.5.0 - http://tools.ietf.org/tools/xml2rfc" />
   <link rel="schema.dct" href="http://purl.org/dc/terms/" />
 
   <meta name="dct.creator" content="Tschudin, C." />
   <meta name="dct.identifier" content="urn:ietf:id:draft-tschudin-icnrg-flic-00" />
-  <meta name="dct.issued" scheme="ISO8601" content="2015-9-07" />
-  <meta name="dct.abstract" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-LIke Collection (FLIC)." />
-  <meta name="description" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-LIke Collection (FLIC)." />
+  <meta name="dct.issued" scheme="ISO8601" content="2015-11-29" />
+  <meta name="dct.abstract" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
+  <meta name="description" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
 
 </head>
 
@@ -418,10 +416,10 @@
 </tr>
 <tr>
   <td class="left">Intended status: Informational</td>
-  <td class="right">September 07, 2015</td>
+  <td class="right">November 29, 2015</td>
 </tr>
 <tr>
-  <td class="left">Expires: March 10, 2016</td>
+  <td class="left">Expires: June 1, 2016</td>
   <td class="right"></td>
 </tr>
 
@@ -429,21 +427,21 @@
     </tbody>
   </table>
 
-  <p class="title">ICN File-Like Collection (FLIC)<br />
+  <p class="title">File-Like ICN Collection (FLIC)<br />
   <span class="filename">draft-tschudin-icnrg-flic-00</span></p>
   
   <h1 id="rfc.abstract">
   <a href="#rfc.abstract">Abstract</a>
 </h1>
-<p>This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-LIke Collection (FLIC).</p>
-<p>At the core of this collection is a so called manifest which acts as the collection&#8217;s root node. The manifest contains an index table with pointers, each pointer being a hash value pointing to either a final data block or another index table node. Data can also be embedded (in case of a small collection), permitting to use a manifest just for annotating some data e.g. with its timestamp or decryption key information.</p>
+<p>This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC).</p>
+<p>At the core of this collection is a so called manifest which acts as the collection&#8217;s root node. The manifest contains an index table with pointers, each pointer being a hash value pointing to either a final data block or another index table node.</p>
 <h1 id="rfc.status">
   <a href="#rfc.status">Status of This Memo</a>
 </h1>
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on March 10, 2016.</p>
+<p>This Internet-Draft will expire on June 1, 2016.</p>
 <h1 id="rfc.copyrightnotice">
   <a href="#rfc.copyrightnotice">Copyright Notice</a>
 </h1>
@@ -458,18 +456,16 @@
   	<li>1.   <a href="#rfc.section.1">Introduction</a></li>
 <ul><li>1.1.   <a href="#rfc.section.1.1">FLIC as a Distributed Data Structure</a></li>
 <li>1.2.   <a href="#rfc.section.1.2">Design goals</a></li>
-</ul><li>2.   <a href="#rfc.section.2">File-LIke Collection (FLIC) Format</a></li>
-<ul><li>2.1.   <a href="#rfc.section.2.1">FLIC format in EBN</a></li>
-<li>2.2.   <a href="#rfc.section.2.2">Use of hash-valued pointers</a></li>
-<li>2.3.   <a href="#rfc.section.2.3">Creating the FLIC</a></li>
-<li>2.4.   <a href="#rfc.section.2.4">Reconstructing the collection&#8217;s data</a></li>
-<li>2.5.   <a href="#rfc.section.2.5">Metadata</a></li>
+</ul><li>2.   <a href="#rfc.section.2">File-Like ICN Collection (FLIC) Format</a></li>
+<ul><li>2.1.   <a href="#rfc.section.2.1">Use of hash-valued pointers</a></li>
+<li>2.2.   <a href="#rfc.section.2.2">Creating the FLIC</a></li>
+<li>2.3.   <a href="#rfc.section.2.3">Reconstructing the collection&#8217;s data</a></li>
+<li>2.4.   <a href="#rfc.section.2.4">Metadata in Hash Groups</a></li>
+<li>2.5.   <a href="#rfc.section.2.5">Locating FLIC leaf and manifest nodes</a></li>
+<li>2.6.   <a href="#rfc.section.2.6">Advanced uses of FLIC manifests</a></li>
 </ul><li>3.   <a href="#rfc.section.3">Encoding</a></li>
 <ul><li>3.1.   <a href="#rfc.section.3.1">Encoding for CCNx</a></li>
 <li>3.2.   <a href="#rfc.section.3.2">Encoding for NDN</a></li>
-<li>3.3.   <a href="#rfc.section.3.3">No chunking</a></li>
-<li>3.4.   <a href="#rfc.section.3.4">Encoding strategies</a></li>
-<li>3.5.   <a href="#rfc.section.3.5">Appending to a FLIC</a></li>
 </ul><li><a href="#rfc.authors">Author's Address</a></li>
 
 
@@ -481,37 +477,37 @@
 <div id="rfc.figure.1"/>
 <div id="manifest"/>
 <pre>
-                                       manifest
-  +--------------------------------------------+
-  | /icn/name/of/this/flic                     |
-  |                                            |
-  | hashgroup:                                 |
-  |   metadata:                                |
-  |     block size, total tree size,           |
-  |     overall digest, locator, etc.          |
-  |   sequence hash-valued pointers            |
-  |                   \  \                     |
-  +--------------------|--\--------------------+
-                       |   \                   node
-                  leaf v    `-------&gt; +------------+
-                 +------+             | seq of     |
-                 | data |             |   pointers |
-                 +------+             |     \  \   |
-                                      +------\--\--+
-                                              vvvv
+                          root manifest
+  .------------------------------------.
+  | optional name:                     |
+  |   /icn/name/of/this/flic           |
+  |                                    |
+  | hashgroup:                         |
+  |   optional metadata:               |
+  |     block size, total tree size,   |       leaf
+  |     overall digest, locator, etc.  |    .------.
+  |   hash-valued data pointer -----------&gt; | data |
+  |     ...                            |    `------'  sub manifest
+  |   hash-valued manifest pointer ------.     .------------------.
+  |                                    |  `--&gt; |                -----&gt;
+  | optional additional hashgroups ..  |       |                -----&gt;
+  |                                    |       `------------------'
+  | optional signature                 |
+  `------------------------------------'
 </pre>
 <p class="figure">Figure 1: A FLIC manifest and its directed acyclic graph</p>
 <h1 id="rfc.section.1.2"><a href="#rfc.section.1.2">1.2.</a> <a href="#design-goals" id="design-goals">Design goals</a></h1>
 <p/>
 
 <ul>
-  <li>Copy the proven UNIX inode concept: <ul><li>index tables and memory pointers (tree)</li><li>a single inode block can represent a small file (embedded data)</li><li>blocks of a node are equally sized</li></ul></li>
-  <li>ICN optimizations: <ul><li>block-level deduplification (leads to a directed acyclic graph, DAG)</li><li>eliminate reference to chunk numbering schemata (hash values only)</li><li>one manifest signature covers all elements, including auxiliary data structures, of the full collection.</li></ul></li>
-  <li>Limitations <ul><li>all data leafs must be present at manifest creation time (otherwise one cannot compute the pointers)</li><li>only the root manifest has metadata (encryption key info, timestamps etc), which thus applies to all blocks of the DAG.</li></ul></li>
+  <li>Copy the proven UNIX inode concept: <ul><li>index tables and memory pointers</li></ul></li>
+  <li>Adaption to ICN: <ul><li>hash values instead of block numbers, unique with high probability</li></ul></li>
+  <li>Advantages (over non-manifest collections): <ul><li>single root manifest signature covers all elements of the full collection, including intermediate sub manifests.</li><li>eliminate reference to chunk numbering schemata (hash values only)</li><li>supports block-level deduplification (leads to a directed acyclic graph, DAG)</li></ul></li>
+  <li>Limitations <ul><li>all data leafs must be present at manifest creation time (otherwise one cannot compute the pointers)</li></ul></li>
   <li>Potential extensions (for study): <ul><li>Enhance the manifest such that it can serve as a &#8220;database cursor&#8221; or as a cursor over a time series, e.g. having entries for &#8220;previous&#8221; and &#8220;next&#8221; collections.</li></ul></li>
 </ul>
-<h1 id="rfc.section.2"><a href="#rfc.section.2">2.</a> <a href="#file-like-collection-flic-format" id="file-like-collection-flic-format">File-LIke Collection (FLIC) Format</a></h1>
-<h1 id="rfc.section.2.1"><a href="#rfc.section.2.1">2.1.</a> <a href="#flic-format-in-ebn" id="flic-format-in-ebn">FLIC format in EBN</a></h1>
+<h1 id="rfc.section.2"><a href="#rfc.section.2">2.</a> <a href="#file-like-icn-collection-flic-format" id="file-like-icn-collection-flic-format">File-Like ICN Collection (FLIC) Format</a></h1>
+<p id="rfc.section.2.p.1">We first give the FLIC format in EBN:</p>
 <pre>
    ManifestMsg := Name? HashGroup+
    HashGroup   := MetaData? (DataPointer | ManifestPtr)+
@@ -523,87 +519,160 @@
    Property    := Locator | DataBlockSize | OverallDataSize |
                   OverallDataSHA256Digest | ...
 </pre>
-<p id="rfc.section.2.1.p.1">Description:</p>
+<p id="rfc.section.2.p.2">Description:</p>
 <p/>
 
 <ul>
-  <li>A manifest consists of a sequence of hash groups, each with optional network-layer meta-data, e.g., the overall digest of the data and the tree node block size</li>
-  <li>A hash group contains a sequence of data or manifest pointers.  Note that the encoding of pointers must represent the type information such that a reader of the index table learns what the pointer points at (and how these bytes have to be interpreted).</li>
-  <li>Application data is stored in leaves of the tree&#8211;not in manifest nodes.</li>
-  <li>Manifests may be optionally encrypted separately of the encoding.</li>
+  <li>The core of a mainfest is the sequence of &#8220;hash groups&#8221;.</li>
+  <li>A hash group consists of a sequence of data or manifest pointers.</li>
+  <li>Data and manifest pointers have distinct types.</li>
+  <li>A hash group can contain a meta data section to help a reader to optimize content retrieval (block size of leaf nodes, total size, overall digest etc).</li>
+  <li>None of the ICN objects used in FLIC are allowed to be chunked, including the (sub-) manifests. The smallest possible complete manifest contains one hashgroup with one pointer to an ICN object.</li>
 </ul>
-<h1 id="rfc.section.2.2"><a href="#rfc.section.2.2">2.2.</a> <a href="#use-of-hash-valued-pointers" id="use-of-hash-valued-pointers">Use of hash-valued pointers</a></h1>
-<p id="rfc.section.2.2.p.1">FLIC&#8217;s tree data structure is a generalized index table as it is known from file systems. The pointers, which in an OS typically are harddisk block numbers, are replaced by hash values of other ICN objects. These ICN objects contain either other nodes, or leafs. Leafs contain the actual data of the collection.</p>
-<p id="rfc.section.2.2.p.2">FLIC makes use of &#8220;nameless ICN object&#8221; where the network is tasked with fetching an object based on its digest only. The interest for such an object consists of a routing hint (locator) plus the given digest value.</p>
-<h1 id="rfc.section.2.3"><a href="#rfc.section.2.3">2.3.</a> <a href="#creating-the-flic" id="creating-the-flic">Creating the FLIC</a></h1>
-<p id="rfc.section.2.3.p.1">FLICs are created from existing application data. The data is first chunked into the desired block size. The data blocks are then inserted into Content Objects whose hashes are computed. These hashes are then iteratively added to manifest nodes to build the tree.</p>
-<p id="rfc.section.2.3.p.2">A pseudocode description for producing is below.</p>
+<h1 id="rfc.section.2.1"><a href="#rfc.section.2.1">2.1.</a> <a href="#use-of-hash-valued-pointers" id="use-of-hash-valued-pointers">Use of hash-valued pointers</a></h1>
+<p id="rfc.section.2.1.p.1">FLIC&#8217;s tree data structure is a generalized index table as it is known from file systems. The pointers, which in an OS typically are harddisk block numbers, are replaced by hash values of other ICN objects. These ICN objects contain either other manifest nodes, or leaf nodes. Leafs contain the actual data of the collection.</p>
+<p id="rfc.section.2.1.p.2">FLIC makes use of &#8220;nameless ICN object&#8221; where the network is tasked with fetching an object based on its digest only. The interest for such an object consists of a routing hint (locator) plus the given digest value.</p>
+<h1 id="rfc.section.2.2"><a href="#rfc.section.2.2">2.2.</a> <a href="#creating-the-flic" id="creating-the-flic">Creating the FLIC</a></h1>
+<p id="rfc.section.2.2.p.1">Starting from the original content, the corresponding byte array is slized into chunks (of equal size if blocksize is present in the metadata section, except for the last chunk). Each chunk is encoded as a data object, according the ICN suite.  For each resulting data object, the hash value is computed. Groups of consecutive objects are formed and the corresponding hash values collected in manifests, which are also encoded. The hash values of the manifest objects replace the hash values of the covered leaf nodes, thus reducing the number of hash values. This process of hash value collection and replacement is repeated until only one (root) manifest is left.</p>
+<pre>
+data1 &lt;-- h1  -  -  -  -  -  -  -  -  -  -  -  - \
+data2 &lt;-- h2 \                                    root mfst
+...            mfst 1 &lt;-- hN+1  \                /
+dataJ &lt;-- hJ /                    mfst2 &lt;-- hN+2
+...                              /
+dataN &lt;-- hN  -  -  -  -  -  -  /
+</pre>
+<p id="rfc.section.2.2.p.2">Of special interest are &#8220;skewed trees&#8221; where a pointer to a manifest may only appear as last pointer of (sub-) manifests. Such a tree becomes a sequential list of manifests and is well suited for efficient content reconstruction.</p>
+<pre>
+data1   &lt;-- h1  -  -  -  -  -  -  -  -  root mfst
+...                                    /
+dataJ-1 &lt;-- hJ-1                      /
+dataJ   &lt;-- hJ  -  -  mfst1 &lt;-- hN+1 /
+...                /
+dataN   &lt;-- hN  - /
+</pre>
+<p id="rfc.section.2.2.p.3">A side effect of skewed trees is that the retriever receives a maximum of data pointers that can be retrieve in parallel, including the pointer to the next manifest to keep the pipeline busy.</p>
+<p id="rfc.section.2.2.p.4">A pseudocode description for producing a skewed tree follows below.</p>
 <pre>
 Input:
     Application data D of size |D| (bytes)
-    Maximum number of pointers P
     Block size B (in bytes)
-    Root name N
-Output: FLIC root node
+Output:
+    FLIC root node R
 
-1. Starting from the end, split D into m = ceil(|D|/B) blocks of size
-B--Dm,..,D1. If |D| is not a multiple of B then D1 will not contain B bytes.
-2. Create an empty manifest node M.
-3. For i = m downto 1 do
-4.     Compute d = H(Di)
-5.     Add d to M with type "data"
-6.     If |M| &gt;= P then
-7.         Compute d = H(M)
-8.         Create a new empty manifest node M'
-9.         Add d to M' with type "manifest"
-10.        Set M to M'
-11. Add the name N to M
-12. Sign M
-13. Return M
+n = number of leaf nodes = ceil(|D| / B)
+k = number of (encoded) hash values fitting in a block of size B
+H[1..n] = array of hash values
+  initialized with the data hash values for data chunks 1..n
+While n &gt; k do
+  a)  create manifest M
+  b)  add to a hashgroup in M all hash values H[n-k+1..n]
+  c)  n = n - k + 1
+  d)  H[n] = manifest hash value of M
+Create root manifest R
+Add to a hashgroup of R all hash values H[1..n]
+Optionally: add name to R, sign manifest R
 </pre>
-<h1 id="rfc.section.2.4"><a href="#rfc.section.2.4">2.4.</a> <a href="#reconstructing-the-collections-data" id="reconstructing-the-collections-data">Reconstructing the collection&#8217;s data</a></h1>
-<p id="rfc.section.2.4.p.1">FLIC trees are skewed by default. This enables retrieval and reconstruction to exploit tail recursion to minimize memory usage. To fetch the data associated with a FLIC manifest, the receiver iterates over each data pointer in a node and sends a corresponding hash-based interest. Once the final manifest pointer is reached, the receiver recurses to retrieve the data contained inside that manifest.  The collection data is represented as the concatenation of data leaves from this post-order traversal strategy.</p>
-<p id="rfc.section.2.4.p.2">A pseudocode description for fetching is below.</p>
+<h1 id="rfc.section.2.3"><a href="#rfc.section.2.3">2.3.</a> <a href="#reconstructing-the-collections-data" id="reconstructing-the-collections-data">Reconstructing the collection&#8217;s data</a></h1>
+<p id="rfc.section.2.3.p.1">To fetch the data associated with a given FLIC (sub-) manifest, the receiver sequentially works through all entries found in the hash groups and issues corresponding hash-based interests. In case of a data hash pointer, the received content object is appended. In case of a manifest hash pointer, this procedure is called recursively for the received manifest. In other words, the collection data is represented as the concatenation of data leaves from this &#8220;depth-first search&#8221; (DFS) traversal strategy of the manifest tree.</p>
+<p id="rfc.section.2.3.p.2">A pseudocode description for fetching is below.</p>
 <pre>
-Input: A FLIC manifest node M
-Output: Application data D of size |D| (bytes)
+procedure DFS(manifest M)
+{
+L:
+  H = sequence of hash valued pointers of M
+  foreach p in H do:
+    if p is a data pointer then
+      D = lookup(p)
+      emit(D)
+    else
+      M = lookup(p)
+      if p is last element in H then
+        goto L;   // tail recursion
+      DFS(M)
+}
+</pre>
+<p id="rfc.section.2.3.p.3">The above DFS code works for FLIC manifest trees of arbitrary shape. In case of a skewed tree, no recursion is needed and a single instance of the DFS procedure suffices (tail recursion).</p>
+<h1 id="rfc.section.2.4"><a href="#rfc.section.2.4">2.4.</a> <a href="#metadata-in-hash-groups" id="metadata-in-hash-groups">Metadata in Hash Groups</a></h1>
+<p id="rfc.section.2.4.p.1">In FLIC, metadata is linked to hash groups and permits to inform the FLIC retriever about properties of the data that is covered by this hash group. Examples are overall data bytes or the block size used at production time. The intent of such metadata is to enable an in-network retriever to optimize its operation - other attributes linked to the collection as a whole (author, copyright etc) is out of scope.</p>
+<p id="rfc.section.2.4.p.2">The list of available metadata is below.</p>
+<pre>
+* total length in bytes - permits to skip retrieving this hash group
+  if the offset of interest is bigger
+  
+* child node block size - permits to jump to a specific data hash
+  pointer of this group (if all pointers are data hash pointers)
 
-1. Set D to nil
-2. Set Ptrs to the list of pointers in M
-2. For each pointer p in Ptrs do
-3.     If p is a "data" pointer then
-4.         Send an interest for p and recover D'
-5.         Set D to D || D'
-6.     Else
-7.         Send an interest for p and recover M'
-8.         Append all pointers in M' to Ptrs
-9. Return D
+* overall application data digest - provides a way to check correct
+  reconstruction of the subtree associated with this hash group
+  (before having reconstructed the full signed FLIC)
+
+* locator value - provides a new routing hint where the chunks of
+  this hash group can be retrieved from. The default is to use
+  the locator that was used to retrieve the root manifest.
 </pre>
-<p id="rfc.section.2.4.p.3">Note that the root manifest node M will usually contain the overall data size to allow receivers to allocate enough memory to store the resulting data.</p>
-<h1 id="rfc.section.2.5"><a href="#rfc.section.2.5">2.5.</a> <a href="#metadata" id="metadata">Metadata</a></h1>
-<p id="rfc.section.2.5.p.1">Each hash group in a manifest may carry optional network-level metadata.  The list of available metadata is below.</p>
+<h1 id="rfc.section.2.5"><a href="#rfc.section.2.5">2.5.</a> <a href="#locating-flic-leaf-and-manifest-nodes" id="locating-flic-leaf-and-manifest-nodes">Locating FLIC leaf and manifest nodes</a></h1>
+<p id="rfc.section.2.5.p.1">The optional name of a manifest is a mere decoration and has no locator functionality at all: All objects pointed to by a manifest are retrieved from the location where the manifest itself was obtained from. Example:</p>
 <pre>
-* locator value (if different from the manifest's name)
-* total length in bytes
-* child node block size
-* overall application data digest
-* etc
+Objects:
+  manifest(name=/a/b/c, ptr=h1, ptr=hN)  - has hash h0
+  nameless(data1)                        - has hash h1
+  ...
+  nameless(dataN)                        - has hash hN
+
+Query for the manifest:
+  interest(name=/the/locator/hint, implicitDigest=h0)
 </pre>
+<p id="rfc.section.2.5.p.2">In this example, the name &#8220;/a/b/c&#8221; does NOT override &#8220;/the/locator/hint&#8221; i.e., after having obtained the manifest, the retriever will issue requests for</p>
+<pre>
+  interest(name=/the/locator/hint, implicitDigest=h1)
+  ...
+  interest(name=/the/locator/hint, implicitDigest=hN)
+</pre>
+<p id="rfc.section.2.5.p.3">Using the locator metadata entry, this behavior can be changed:</p>
+<pre>
+Objects:
+  manifest(name=/a/b/c,
+           hashgroup(loc=/x/y/z, ptr=h1)
+           hashgroup(ptr=h2)             - has hash h0
+  nameless(data1)                        - has hash h1
+  nameless(data2)                        - has hash h2
+
+Queries:
+  interest(name=/the/locator/hint, implicitDigest=h0)
+  interest(name=/x/y/z, implicitDigest=h1)
+  interest(name=/the/locator/hint, implicitDigest=h2)
+</pre>
+<h1 id="rfc.section.2.6"><a href="#rfc.section.2.6">2.6.</a> <a href="#advanced-uses-of-flic-manifests" id="advanced-uses-of-flic-manifests">Advanced uses of FLIC manifests</a></h1>
+<p id="rfc.section.2.6.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects:</p>
+<p id="rfc.section.2.6.p.2">a) dedup</p>
+<p id="rfc.section.2.6.p.3">.. to be written ..</p>
+<p id="rfc.section.2.6.p.4">b) Growing ICN collections</p>
+<p id="rfc.section.2.6.p.5">A log file, for example, grows over time. Instead of having to re-FLIC the grown file it suffices to construct a new manifest with a manifest pointer to the old root manifest plus the sequence of data hash pointers for the new data (or additional sub-manifests if necessary).  Note that this tree will not be skewed (anymore).</p>
+<pre>
+old data &lt; -  -  -  mfst_old &lt;-- h_old -  - mfst_new
+                                            /
+new data1 &lt;-- h_1 -  -  -  -  -  -  -  -  -/
+new data2                                 /
+...                                      /
+new dataN &lt;-- h_N -  -  -  -  -  -  -  -/
+</pre>
+<p id="rfc.section.2.6.p.6">c) Republishing a FLIC under a new name</p>
+<p id="rfc.section.2.6.p.7">It can happend that a publisher&#8217;s namespace is part of a service provider&#8217;s prefix. When switching provider, the publisher may want to republish the old data under a new name. This can easily be achieved with a single nameless root manifest for the large FLIC plus arbitrarily many per-name manifests (which are signed by whomever wants to publish this data):</p>
+<pre>
+data &lt; - nameless_mfst() &lt;-- h  &lt; - -  mfst(/com/parc/east/the/flic)
+                                &lt; - -  mfst(/com/parc/west/old/the/flic)
+                                &lt; - -  mfst(/internet/archive/flic234)
+</pre>
+<p id="rfc.section.2.6.p.8">Note that the hash computation (of h) only requires reading the nameless root manifest, not the entire FLIC.</p>
+<p id="rfc.section.2.6.p.9">This example points out the problem of hashgroups having locator metadata elements: A retriever would be urged to follow these hints which are &#8220;hardcoded&#8221; in the FLIC but migh have become outdated. We therefore recommend to name FLIC manifests only at the highest level where these names have no locator function.</p>
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#encoding" id="encoding">Encoding</a></h1>
 <h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#encoding-for-ccnx" id="encoding-for-ccnx">Encoding for CCNx</a></h1>
-<p id="rfc.section.3.1.p.1">use hashRestriction as selector</p>
+<p id="rfc.section.3.1.p.1">use objHashRestriction as selector</p>
 <p id="rfc.section.3.1.p.2">how pointers etc are encoded in TLV &#8230;</p>
 <h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#encoding-for-ndn" id="encoding-for-ndn">Encoding for NDN</a></h1>
 <p id="rfc.section.3.2.p.1">use implicitDigest name component as selector</p>
 <p id="rfc.section.3.2.p.2">how pointers etc are encoded in TLV &#8230;</p>
-<h1 id="rfc.section.3.3"><a href="#rfc.section.3.3">3.3.</a> <a href="#no-chunking" id="no-chunking">No chunking</a></h1>
-<p id="rfc.section.3.3.p.1">None of the ICN objects used in FLIC are allowed to be chunked, including the manifest. The smallest possible complete manifest contains one pointer to the ICN object containing the topmost index table (or leaf) plus a metadata section having a single entry or the actucal metadata ICn object.</p>
-<h1 id="rfc.section.3.4"><a href="#rfc.section.3.4">3.4.</a> <a href="#encoding-strategies" id="encoding-strategies">Encoding strategies</a></h1>
-<p id="rfc.section.3.4.p.1">FLIC&#8217;s Node+Leaf data structures encode a tree or directed acyclic graph. This leaves it open how to balance the graph during its encoding. An extreme layout would be a chain of nodes, each having a single pointer to a leaf plus a continuation pointer for the next node. The opposite layout would be a master index table pointing to many leafs or sub-tables such as to minimize the tree&#8217;s height.</p>
-<p id="rfc.section.3.4.p.2">For performance reasons it is suggested to follow a chain pattern where each index table node in the chain has at least 10 to 20 pointers to leafs.</p>
-<h1 id="rfc.section.3.5"><a href="#rfc.section.3.5">3.5.</a> <a href="#appending-to-a-flic" id="appending-to-a-flic">Appending to a FLIC</a></h1>
-<p id="rfc.section.3.5.p.1">Adding data to a FLIC means creating a new manifest with a new top-level index table. If the original manifest is not too large, its top-level index table can be used as starting point for the new one which is extended by one leaf pointer. In any case a new manifest object is created which also needs a new name.</p>
-<p id="rfc.section.3.5.p.2">Note that the new manifest&#8217;s name usually will differ (e.g. in the version name component) and that the new manifest might need to carry an explicit locator entry in the metadata section in order to make the (old) leaf objects accessible.</p>
 <h1 id="rfc.authors">
   <a href="#rfc.authors">Author's Address</a>
 </h1>
