@@ -454,6 +454,7 @@ Encoding for CCNx1.0
 --------------------
 
 ~~~
+[FIXED_HEADER OCTET[8]]
 (ManifestMsg/0x6
   (Name/0x0 ...)
   (HashGroup/0x1
@@ -476,17 +477,22 @@ Encoding for NDN
 ----------------
 
 ~~~
-(ManifestMsg/0xC0
+(Data0x6
   (Name/0x7 ...)
-  (HashGroup/0xC1
-     (MetaData/0xC4
+  (MetaInfo/0x14
+    (ContentType/0x18 0xC0)
+  )
+  (Content/0x15
+    (HashGroup/0xC1
+      (MetaData/0xC4
         (LocatorNm/0xC5 (NameComp/0x8 ...))
         (BlockSize/0xC7 INT)
         (TotalSize/0xC8 INT)
         (TotalHash/0xC9 OCTET[32])
-     )
-     (DataPtr/0xC2 OCTET[32])
-     (MfstPtr/0xC3 OCTET[32])
+      )
+      (DataPtr/0xC2 OCTET[32])
+      (MfstPtr/0xC3 OCTET[32])
+    )
   )
   (SignatureInfo/0x16 ...)
   (SignatureValue/0x17 ...)
