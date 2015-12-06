@@ -4,8 +4,9 @@
 
 ICNRG Working Group                                          C. Tschudin
 Internet-Draft                                       University of Basel
-Intended status: Informational                         November 29, 2015
-Expires: June 1, 2016
+Intended status: Informational                                   C. Wood
+Expires: June 1, 2016                                         PARC, Inc.
+                                                       November 29, 2015
 
 
                     File-Like ICN Collection (FLIC)
@@ -49,15 +50,15 @@ Copyright Notice
    (http://trustee.ietf.org/license-info) in effect on the date of
    publication of this document.  Please review these documents
    carefully, as they describe your rights and restrictions with respect
-   to this document.  Code Components extracted from this document must
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 1]
+Tschudin & Wood           Expires June 1, 2016                  [Page 1]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
 
+   to this document.  Code Components extracted from this document must
    include Simplified BSD License text as described in Section 4.e of
    the Trust Legal Provisions and are provided without warranty as
    described in the Simplified BSD License.
@@ -81,7 +82,7 @@ Table of Contents
    4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  10
      4.1.  Encoding for CCNx1.0  . . . . . . . . . . . . . . . . . .  11
      4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  11
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  12
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  12
 
 1.  Introduction
 
@@ -108,8 +109,7 @@ Table of Contents
 
 
 
-
-Tschudin                  Expires June 1, 2016                  [Page 2]
+Tschudin & Wood           Expires June 1, 2016                  [Page 2]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -165,7 +165,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 3]
+Tschudin & Wood           Expires June 1, 2016                  [Page 3]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -221,7 +221,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 4]
+Tschudin & Wood           Expires June 1, 2016                  [Page 4]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -277,7 +277,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 5]
+Tschudin & Wood           Expires June 1, 2016                  [Page 5]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -333,7 +333,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 6]
+Tschudin & Wood           Expires June 1, 2016                  [Page 6]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -389,7 +389,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 7]
+Tschudin & Wood           Expires June 1, 2016                  [Page 7]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -445,7 +445,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 8]
+Tschudin & Wood           Expires June 1, 2016                  [Page 8]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -501,7 +501,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                  [Page 9]
+Tschudin & Wood           Expires June 1, 2016                  [Page 9]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -557,7 +557,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                 [Page 10]
+Tschudin & Wood           Expires June 1, 2016                 [Page 10]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -613,7 +613,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin                  Expires June 1, 2016                 [Page 11]
+Tschudin & Wood           Expires June 1, 2016                 [Page 11]
 
 Internet-Draft                  ICN-FLIC                   November 2015
 
@@ -642,7 +642,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
    Interest: name is locator, use implicitDigest name component as
    selector
 
-Author's Address
+Authors' Addresses
 
    Christian Tschudin
    University of Basel
@@ -650,6 +650,10 @@ Author's Address
    Email: christian.tschudin@unibas.ch
 
 
+   Christopher A. Wood
+   PARC, Inc.
+
+   Email: christopher.wood@parc.com
 
 
 
@@ -665,8 +669,4 @@ Author's Address
 
 
 
-
-
-
-
-Tschudin                  Expires June 1, 2016                 [Page 12]
+Tschudin & Wood           Expires June 1, 2016                 [Page 12]
