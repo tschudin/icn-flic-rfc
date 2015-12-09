@@ -394,12 +394,12 @@
 <link href="#rfc.authors" rel="Chapter"/>
 
 
-  <meta name="generator" content="xml2rfc version 2.5.1 - http://tools.ietf.org/tools/xml2rfc" />
+  <meta name="generator" content="xml2rfc version 2.5.0 - http://tools.ietf.org/tools/xml2rfc" />
   <link rel="schema.dct" href="http://purl.org/dc/terms/" />
 
   <meta name="dct.creator" content="Tschudin, C. and C. Wood" />
   <meta name="dct.identifier" content="urn:ietf:id:draft-tschudin-icnrg-flic-00" />
-  <meta name="dct.issued" scheme="ISO8601" content="2015-11-29" />
+  <meta name="dct.issued" scheme="ISO8601" content="2015-12-08" />
   <meta name="dct.abstract" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
   <meta name="description" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
 
@@ -423,12 +423,12 @@
   <td class="right">C. Wood</td>
 </tr>
 <tr>
-  <td class="left">Expires: June 1, 2016</td>
+  <td class="left">Expires: June 10, 2016</td>
   <td class="right">PARC, Inc.</td>
 </tr>
 <tr>
   <td class="left"></td>
-  <td class="right">November 29, 2015</td>
+  <td class="right">December 08, 2015</td>
 </tr>
 
     	
@@ -449,7 +449,7 @@
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on June 1, 2016.</p>
+<p>This Internet-Draft will expire on June 10, 2016.</p>
 <h1 id="rfc.copyrightnotice">
   <a href="#rfc.copyrightnotice">Copyright Notice</a>
 </h1>
@@ -554,7 +554,7 @@ dataJ &lt;-- hJ /                    mfst2 &lt;-- hN+2
 ...                              /
 dataN &lt;-- hN  -  -  -  -  -  -  /
 </pre>
-<p id="rfc.section.2.2.p.2">Of special interest are &#8220;skewed trees&#8221; where a pointer to a manifest may only appear as last pointer of (sub-) manifests. Such a tree becomes a sequential list of manifests and is well suited for efficient content reconstruction.</p>
+<p id="rfc.section.2.2.p.2">Of special interest are &#8220;skewed trees&#8221; where a pointer to a manifest may only appear as last pointer of (sub-) manifests. Such a tree becomes a sequential list of manifests with a maximum of datapointers per manifest packet. Beside the tree shape we also show this data structure in form of packet content where D stands for a data pointer and M is the hash of a manifest packet.</p>
 <pre>
 data1   &lt;-- h1  -  -  -  -  -  -  -  -  root mfst
 ...                                    /
@@ -562,9 +562,10 @@ dataJ-1 &lt;-- hJ-1                      /
 dataJ   &lt;-- hJ  -  -  mfst1 &lt;-- hN+1 /
 ...                /
 dataN   &lt;-- hN  - /
+
+DDDDDDM--&gt; DDDDDDM--&gt; ....... DDDDDDM--&gt; DDDDDDD
 </pre>
-<p id="rfc.section.2.2.p.3">A side effect of skewed trees is that the retriever receives a maximum of data pointers that can be retrieved in parallel, including the pointer to the next manifest to keep the pipeline filled.</p>
-<p id="rfc.section.2.2.p.4">A pseudo code description for producing a skewed tree follows below.</p>
+<p id="rfc.section.2.2.p.3">A pseudo code description for producing a skewed tree follows below.</p>
 <pre>
 Input:
     Application data D of size |D| (bytes)
@@ -586,8 +587,18 @@ Algo:
     Optionally: add name to R, sign manifest R
     Output R
 </pre>
+<p id="rfc.section.2.2.p.4">Obtaining with each manifest a maximum of data pointers is benefitial for keeping the download pipeline filled. On the other hand, this tree doesn&#8217;t support well random access to arbitrary byte positions: All data pointers coming before that offset have to be fetched before locating the block of interest. For random access, binary trees (where both subtrees of a node cover half of the content bytes) are better suited. This can be combined with the &#8220;skewed tree&#8221; approach: Manifests of intermediate nodes are filled with data pointers except for the last two slots. The second last slot points to a manifest for the &#8220;first half&#8221; of the left content, the last slots then points to a manifest for the rest.</p>
+<pre>
+root manifest=     DDDDDMM
+           ____________/  \_____
+          /                     \
+          DDDDDMM                DDDDDMM
+       _______/  \              _____/  \
+      /           \            /         \
+      DDDDDDD      DDDDDDD     DDDDDDD    DDDDDDD
+</pre>
 <h1 id="rfc.section.2.3"><a href="#rfc.section.2.3">2.3.</a> <a href="#reconstructing-the-collections-data" id="reconstructing-the-collections-data">Reconstructing the collection&#8217;s data</a></h1>
-<p id="rfc.section.2.3.p.1">To fetch the data associated with a given FLIC (sub-) manifest, the receiver sequentially works through all entries found in the HashGroups and issues corresponding hash-based interests. In case of a data hash pointer, the received content object is appended. In case of a manifest hash pointer, this procedure is called recursively for the received manifest. In other words, the collection data is represented as the concatenation of data leaves from this &#8220;depth-first search&#8221; (DFS) traversal strategy of the manifest tree.</p>
+<p id="rfc.section.2.3.p.1">To fetch the data associated with a given FLIC (sub-) manifest, the receiver sequentially works through all entries found in the HashGroups and issues corresponding hash-based interests. In case of a data hash pointer, the received content object is appended. In case of a manifest hash pointer, this procedure is called recursively for the received manifest. In other words, the collection data is represented as the concatenation of data leaves from this &#8220;depth-first search&#8221; (DFS) traversal strategy of the manifest tree. This procedure works regardless of the tree&#8217;s shape.</p>
 <p id="rfc.section.2.3.p.2">A pseudo code description for fetching is below.</p>
 <pre>
 Input:
@@ -631,6 +642,9 @@ L:
   reconstruction of the subtree associated with this hash group
   (before having reconstructed the full signed FLIC)
 
+* tree depth - permits a receiver to predict the amount of memory
+  needed when traversing this tree.
+
 * locator value - provides a new routing hint (name prefix) where the
   chunks of this hash group can be retrieved from. The default is to
   use the locator of the root manifest.
@@ -670,7 +684,7 @@ Queries:
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#advanced-uses-of-flic-manifests" id="advanced-uses-of-flic-manifests">Advanced uses of FLIC manifests</a></h1>
 <p id="rfc.section.3.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects:</p>
 <h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#block-level-de-duplification" id="block-level-de-duplification">Block-level de-duplification</a></h1>
-<p id="rfc.section.3.1.p.1">Consider a huge file, e.g. an ISO image of a DVD or program in binary form, that had previously been FLIC-ed but now needs to be patched.  In this case, all existing encoded ICN chunks can remain in the repository while only the chunks for the patch itself is added to a new manifest data structure, as is shown in the picture below.</p>
+<p id="rfc.section.3.1.p.1">Consider a huge file, e.g. an ISO image of a DVD or program in binary form, that had previously been FLIC-ed but now needs to be patched.  In this case, all existing encoded ICN chunks can remain in the repository while only the chunks for the patch itself is added to a new manifest data structure, as is shown in the picture below. For example, the <a href="http://plan9.bell-labs.com/sys/doc/venti/venti.pdf">venti</a> archival file system of Plan9 uses this technique.</p>
 <pre>
 old_mfst -  - &gt; h1 --&gt; oldData1  &lt;-- h1 &lt; -  -  new_mfst
          \  - &gt; h2 --&gt; oldData2  &lt;-- h2 &lt; -  - /
@@ -737,7 +751,7 @@ M = (manifest
 <p id="rfc.section.4.1.p.1">Interest: name is locator, use objHashRestriction as selector</p>
 <h1 id="rfc.section.4.2"><a href="#rfc.section.4.2">4.2.</a> <a href="#encoding-for-ndn" id="encoding-for-ndn">Encoding for NDN</a></h1>
 <pre>
-(Data0x6
+(Data/0x6
   (Name/0x7 ...)
   (MetaInfo/0x14
     (ContentType/0x18 0xC0)

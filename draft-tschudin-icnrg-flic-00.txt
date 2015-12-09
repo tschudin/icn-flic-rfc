@@ -5,8 +5,8 @@
 ICNRG Working Group                                          C. Tschudin
 Internet-Draft                                       University of Basel
 Intended status: Informational                                   C. Wood
-Expires: June 1, 2016                                         PARC, Inc.
-                                                       November 29, 2015
+Expires: June 10, 2016                                        PARC, Inc.
+                                                       December 08, 2015
 
 
                     File-Like ICN Collection (FLIC)
@@ -38,7 +38,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on June 1, 2016.
+   This Internet-Draft will expire on June 10, 2016.
 
 Copyright Notice
 
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Tschudin & Wood           Expires June 1, 2016                  [Page 1]
+Tschudin & Wood           Expires June 10, 2016                 [Page 1]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
    to this document.  Code Components extracted from this document must
@@ -82,6 +82,7 @@ Table of Contents
    4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  10
      4.1.  Encoding for CCNx1.0  . . . . . . . . . . . . . . . . . .  11
      4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  11
+     5.1.  URIs  . . . . . . . . . . . . . . . . . . . . . . . . . .  12
    Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  12
 
 1.  Introduction
@@ -108,10 +109,9 @@ Table of Contents
 
 
 
-
-Tschudin & Wood           Expires June 1, 2016                  [Page 2]
+Tschudin & Wood           Expires June 10, 2016                 [Page 2]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
                             root manifest
@@ -165,9 +165,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin & Wood           Expires June 1, 2016                  [Page 3]
+Tschudin & Wood           Expires June 10, 2016                 [Page 3]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
       *  Enhance the manifest such that it can serve as a "database
@@ -221,9 +221,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin & Wood           Expires June 1, 2016                  [Page 4]
+Tschudin & Wood           Expires June 10, 2016                 [Page 4]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
 2.2.  Creating a FLIC data structure
@@ -248,8 +248,10 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
    Of special interest are "skewed trees" where a pointer to a manifest
    may only appear as last pointer of (sub-) manifests.  Such a tree
-   becomes a sequential list of manifests and is well suited for
-   efficient content reconstruction.
+   becomes a sequential list of manifests with a maximum of datapointers
+   per manifest packet.  Beside the tree shape we also show this data
+   structure in form of packet content where D stands for a data pointer
+   and M is the hash of a manifest packet.
 
    data1   <-- h1  -  -  -  -  -  -  -  -  root mfst
    ...                                    /
@@ -258,9 +260,7 @@ Internet-Draft                  ICN-FLIC                   November 2015
    ...                /
    dataN   <-- hN  - /
 
-   A side effect of skewed trees is that the retriever receives a
-   maximum of data pointers that can be retrieved in parallel, including
-   the pointer to the next manifest to keep the pipeline filled.
+   DDDDDDM--> DDDDDDM--> ....... DDDDDDM--> DDDDDDD
 
    A pseudo code description for producing a skewed tree follows below.
 
@@ -277,9 +277,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin & Wood           Expires June 1, 2016                  [Page 5]
+Tschudin & Wood           Expires June 10, 2016                 [Page 5]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
    Input:
@@ -302,6 +302,26 @@ Internet-Draft                  ICN-FLIC                   November 2015
        Optionally: add name to R, sign manifest R
        Output R
 
+   Obtaining with each manifest a maximum of data pointers is benefitial
+   for keeping the download pipeline filled.  On the other hand, this
+   tree doesn't support well random access to arbitrary byte positions:
+   All data pointers coming before that offset have to be fetched before
+   locating the block of interest.  For random access, binary trees
+   (where both subtrees of a node cover half of the content bytes) are
+   better suited.  This can be combined with the "skewed tree" approach:
+   Manifests of intermediate nodes are filled with data pointers except
+   for the last two slots.  The second last slot points to a manifest
+   for the "first half" of the left content, the last slots then points
+   to a manifest for the rest.
+
+   root manifest=     DDDDDMM
+              ____________/  \_____
+             /                     \
+             DDDDDMM                DDDDDMM
+          _______/  \              _____/  \
+         /           \            /         \
+         DDDDDDD      DDDDDDD     DDDDDDD    DDDDDDD
+
 2.3.  Reconstructing the collection's data
 
    To fetch the data associated with a given FLIC (sub-) manifest, the
@@ -310,33 +330,19 @@ Internet-Draft                  ICN-FLIC                   November 2015
    a data hash pointer, the received content object is appended.  In
    case of a manifest hash pointer, this procedure is called recursively
    for the received manifest.  In other words, the collection data is
+
+
+
+Tschudin & Wood           Expires June 10, 2016                 [Page 6]
+
+Internet-Draft                  ICN-FLIC                   December 2015
+
+
    represented as the concatenation of data leaves from this "depth-
-   first search" (DFS) traversal strategy of the manifest tree.
+   first search" (DFS) traversal strategy of the manifest tree.  This
+   procedure works regardless of the tree's shape.
 
    A pseudo code description for fetching is below.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Tschudin & Wood           Expires June 1, 2016                  [Page 6]
-
-Internet-Draft                  ICN-FLIC                   November 2015
-
 
    Input:
        Root manifest R
@@ -383,15 +389,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-
-
-
-
-
-
-Tschudin & Wood           Expires June 1, 2016                  [Page 7]
+Tschudin & Wood           Expires June 10, 2016                 [Page 7]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
    * total length in bytes - permits to skip retrieving this hash group
@@ -403,6 +403,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
    * overall application data digest - provides a way to check correct
      reconstruction of the subtree associated with this hash group
      (before having reconstructed the full signed FLIC)
+
+   * tree depth - permits a receiver to predict the amount of memory
+     needed when traversing this tree.
 
    * locator value - provides a new routing hint (name prefix) where the
      chunks of this hash group can be retrieved from. The default is to
@@ -442,12 +445,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-
-
-
-Tschudin & Wood           Expires June 1, 2016                  [Page 8]
+Tschudin & Wood           Expires June 10, 2016                 [Page 8]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
    Objects:
@@ -473,7 +473,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
    form, that had previously been FLIC-ed but now needs to be patched.
    In this case, all existing encoded ICN chunks can remain in the
    repository while only the chunks for the patch itself is added to a
-   new manifest data structure, as is shown in the picture below.
+   new manifest data structure, as is shown in the picture below.  For
+   example, the venti [1] archival file system of Plan9 uses this
+   technique.
 
    old_mfst -  - > h1 --> oldData1  <-- h1 < -  -  new_mfst
             \  - > h2 --> oldData2  <-- h2 < -  - /
@@ -499,11 +501,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-
-
-Tschudin & Wood           Expires June 1, 2016                  [Page 9]
+Tschudin & Wood           Expires June 10, 2016                 [Page 9]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
 3.3.  Re-publishing a FLIC under a new name
@@ -557,9 +557,9 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin & Wood           Expires June 1, 2016                 [Page 10]
+Tschudin & Wood           Expires June 10, 2016                [Page 10]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
    (Interest/0x5
@@ -613,12 +613,12 @@ Internet-Draft                  ICN-FLIC                   November 2015
 
 
 
-Tschudin & Wood           Expires June 1, 2016                 [Page 11]
+Tschudin & Wood           Expires June 10, 2016                [Page 11]
 
-Internet-Draft                  ICN-FLIC                   November 2015
+Internet-Draft                  ICN-FLIC                   December 2015
 
 
-   (Data0x6
+   (Data/0x6
      (Name/0x7 ...)
      (MetaInfo/0x14
        (ContentType/0x18 0xC0)
@@ -642,6 +642,12 @@ Internet-Draft                  ICN-FLIC                   November 2015
    Interest: name is locator, use implicitDigest name component as
    selector
 
+5.  References
+
+5.1.  URIs
+
+   [1] http://plan9.bell-labs.com/sys/doc/venti/venti.pdf
+
 Authors' Addresses
 
    Christian Tschudin
@@ -663,10 +669,4 @@ Authors' Addresses
 
 
 
-
-
-
-
-
-
-Tschudin & Wood           Expires June 1, 2016                 [Page 12]
+Tschudin & Wood           Expires June 10, 2016                [Page 12]
