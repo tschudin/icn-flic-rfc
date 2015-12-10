@@ -591,8 +591,8 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 4.2.  Encoding for NDN
 
-
-
+   The assigned NDN content type value for FLIC manifests is 1024
+   (0x400).
 
 
 
@@ -621,18 +621,19 @@ Internet-Draft                  ICN-FLIC                   December 2015
    (Data/0x6
      (Name/0x7 ...)
      (MetaInfo/0x14
-       (ContentType/0x18 0xC0)
+       (ContentType/0x18 0x0400)
      )
      (Content/0x15
-       (HashGroup/0xC1
-         (MetaData/0xC4
-           (LocatorNm/0xC5 (NameComp/0x8 ...))
-           (BlockSize/0xC7 INT)
-           (TotalSize/0xC8 INT)
-           (TotalHash/0xC9 OCTET[32])
+       (HashGroup/0xC0
+         (MetaINfo/0x20
+           (LocatorNm/0x07 (NameComp/0x8 ...))
+           (TotalHash/0xC3 OCTET[32])
+           (BlockSize/0xC4 INT)
+           (TotalSize/0xC5 INT)
+           (BlockSize/0xC6 INT)
          )
-         (DataPtr/0xC2 OCTET[32])
-         (MfstPtr/0xC3 OCTET[32])
+         (DataPtr/0xC1 OCTET[32])
+         (MfstPtr/0xC2 OCTET[32])
        )
      )
      (SignatureInfo/0x16 ...)
@@ -660,7 +661,6 @@ Authors' Addresses
    PARC, Inc.
 
    Email: christopher.wood@parc.com
-
 
 
 

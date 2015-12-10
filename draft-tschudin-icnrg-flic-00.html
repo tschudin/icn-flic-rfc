@@ -750,29 +750,31 @@ M = (manifest
 </pre>
 <p id="rfc.section.4.1.p.1">Interest: name is locator, use objHashRestriction as selector</p>
 <h1 id="rfc.section.4.2"><a href="#rfc.section.4.2">4.2.</a> <a href="#encoding-for-ndn" id="encoding-for-ndn">Encoding for NDN</a></h1>
+<p id="rfc.section.4.2.p.1">The assigned NDN content type value for FLIC manifests is 1024 (0x400).</p>
 <pre>
 (Data/0x6
   (Name/0x7 ...)
   (MetaInfo/0x14
-    (ContentType/0x18 0xC0)
+    (ContentType/0x18 0x0400)
   )
   (Content/0x15
-    (HashGroup/0xC1
-      (MetaData/0xC4
-        (LocatorNm/0xC5 (NameComp/0x8 ...))
-        (BlockSize/0xC7 INT)
-        (TotalSize/0xC8 INT)
-        (TotalHash/0xC9 OCTET[32])
+    (HashGroup/0xC0
+      (MetaINfo/0x20
+        (LocatorNm/0x07 (NameComp/0x8 ...))
+        (TotalHash/0xC3 OCTET[32])
+        (BlockSize/0xC4 INT)
+        (TotalSize/0xC5 INT)
+        (BlockSize/0xC6 INT)
       )
-      (DataPtr/0xC2 OCTET[32])
-      (MfstPtr/0xC3 OCTET[32])
+      (DataPtr/0xC1 OCTET[32])
+      (MfstPtr/0xC2 OCTET[32])
     )
   )
   (SignatureInfo/0x16 ...)
   (SignatureValue/0x17 ...)
 )
 </pre>
-<p id="rfc.section.4.2.p.1">Interest: name is locator, use implicitDigest name component as selector</p>
+<p id="rfc.section.4.2.p.2">Interest: name is locator, use implicitDigest name component as selector</p>
 <h1 id="rfc.authors">
   <a href="#rfc.authors">Authors' Addresses</a>
 </h1>
