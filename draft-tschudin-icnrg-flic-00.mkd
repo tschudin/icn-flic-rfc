@@ -520,12 +520,12 @@ The assigned NDN content type value for FLIC manifests is 1024 (0x400).
   )
   (Content/0x15
     (HashGroup/0xC0
-      (MetaINfo/0x20
+      (MetaInfo/0x20
         (LocatorNm/0x07 (NameComp/0x8 ...))
         (TotalHash/0xC3 OCTET[32])
-        (BlockSize/0xC4 INT)
-        (TotalSize/0xC5 INT)
-        (BlockSize/0xC6 INT)
+        (TotalSize/0xC4 INT)
+        (BlockSize/0xC5 INT)
+        (TreeDepth/0xC6 INT)
       )
       (DataPtr/0xC1 OCTET[32])
       (MfstPtr/0xC2 OCTET[32])
