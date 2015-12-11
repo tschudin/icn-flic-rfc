@@ -625,12 +625,12 @@ Internet-Draft                  ICN-FLIC                   December 2015
      )
      (Content/0x15
        (HashGroup/0xC0
-         (MetaINfo/0x20
-           (LocatorNm/0x07 (NameComp/0x8 ...))
-           (TotalHash/0xC3 OCTET[32])
-           (BlockSize/0xC4 INT)
+         (MetaInfo/0x20
+           (LocatorNm/0xC3 (NameComp/0x8 ...))
+           (TotalHash/0xC4 OCTET[32])
            (TotalSize/0xC5 INT)
            (BlockSize/0xC6 INT)
+           (TreeDepth/0xC7 INT)
          )
          (DataPtr/0xC1 OCTET[32])
          (MfstPtr/0xC2 OCTET[32])
