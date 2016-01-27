@@ -57,7 +57,7 @@ data block or another index table node.
 
 --- middle
 
-Introduction        {#problems}
+Introduction
 ============
 
 FLIC as a Distributed Data Structure
@@ -71,9 +71,9 @@ One figure
   | optional name:                     |
   |   /icn/name/of/this/flic           |
   |                                    |
-  | HashGroup:                         |
+  | HashGroup (HG):                    |
   |   optional metadata:               |
-  |     block size, total tree size,   |       leaf
+  |     data size, entry size          |
   |     overall digest, locator, etc.  |    .------.
   |   hash-valued data pointer -----------> | data |
   |     ...                            |    `------'  sub manifest
@@ -125,15 +125,15 @@ We first give the FLIC format in EBN notation:
    HashValue   := OCTET[32]
 
    MetaData    := Property*
-   Property    := Locator | DataBlockSize | OverallDataSize |
-                  OverallDataSHA256Digest | ...
+   Property    := Locator | DataSize | EntrySize | BlockSize |
+                  DataDigest | TreeDepth | ...
 ~~~
 
 Description:
 
 * The core of a manifest is the sequence of "hash groups".
 
-* A HashGroup consists of a sequence of data or manifest pointers.
+* A HashGroup (HG) consists of a sequence of data or manifest pointers.
 
 * Data as well as manifest pointers are SHA256 digests (32 Bytes);
   their encoding assigns them distinct types.
@@ -226,7 +226,7 @@ Algo:
     Output R
 ~~~
 
-Obtaining with each manifest a maximum of data pointers is benefitial
+Obtaining with each manifest a maximum of data pointers is beneficial
 for keeping the download pipeline filled. On the other hand, this tree
 doesn't support well random access to arbitrary byte positions: All
 data pointers coming before that offset have to be fetched before
@@ -247,7 +247,9 @@ root manifest=     DDDDDMM
       /           \            /         \
       DDDDDDD      DDDDDDD     DDDDDDD    DDDDDDD
 ~~~
- 
+
+This can be generalized to k-ary trees by allocating k pointers per manifest
+instead of 2.
 
 Reconstructing the collection's data
 ------------------------------------
@@ -258,9 +260,10 @@ HashGroups and issues corresponding hash-based interests. In case of a
 data hash pointer, the received content object is appended. In case of
 a manifest hash pointer, this procedure is called recursively for the
 received manifest. In other words, the collection data is represented
-as the concatenation of data leaves from this "depth-first search"
-(DFS) traversal strategy of the manifest tree. This procedure works
-regardless of the tree's shape.
+as the concatenation of data leaves from this *pre-order* "depth-first search"
+(DFS) traversal strategy of the manifest tree. (Currently, pre-order DFS is
+the only supported traversal strategy.) This procedure works regardless of
+the tree's shape.
 
 A pseudo code description for fetching is below.
 
@@ -294,39 +297,54 @@ L:
 
 The above DFS code works for FLIC manifest trees of arbitrary
 shape. In case of a skewed tree, no recursion is needed and a single
-instance of the DFS procedure suffices (tail recursion).
+instance of the DFS procedure suffices (i.e., one uses tail recursion).
 
 Metadata in HashGroups
 ----------------------
 
 In FLIC, metadata is linked to HashGroups and permits to inform the
 FLIC retriever about properties of the data that is covered by this hash
-group. Examples are overall data bytes or the block size used at
-production time. The intent of such metadata is to enable an
-in-network retriever to optimize its operation - other attributes
-linked to the collection as a whole (author, copyright etc) is out of
-scope.
+group. Examples are overall data bytes or the size per entry. The intent
+of such metadata is to enable an in-network retriever to optimize its
+operation - other attributes linked to the collection as a whole (author,
+copyright, etc.) is out of scope.
 
 The list of available metadata is below.
 
 ~~~
-* total length in bytes - permits to skip retrieving this hash group
-  if the offset of interest is bigger
-
-* child node block size - permits to jump to a specific data hash
-  pointer of this group (if all pointers are data hash pointers)
-
-* overall application data digest - provides a way to check correct
-  reconstruction of the subtree associated with this hash group
-  (before having reconstructed the full signed FLIC)
-
-* tree depth - permits a receiver to predict the amount of memory
-  needed when traversing this tree.
-
-* locator value - provides a new routing hint (name prefix) where the
+* Locator - provides a new routing hint (name prefix) where the
   chunks of this hash group can be retrieved from. The default is to
   use the locator of the root manifest.
+
+* DataSize - indicates the total number of *application data bytes*
+  contained in a single HashGroup. This does not include bytes consumed
+  by child manifests.  
+
+* EntrySize - indicates the number of *application data bytes* contained
+  by a single entry (pointer) in a HashGroup.
+
+* BlockSize - indicates the size of each data and manifest node used
+  when producing each entry of the HashGroup.
+
+* DataDigest - expresses the overall digest of all application data
+  contained in the HashGroup.
+
+* Tree Depth - expresses the depth of each entry in the HashGroup and
+  allows a receiver to predict the amount of memory needed when
+  traversing this tree.
 ~~~
+
+To give an example of how the DataSize and EntrySize values are used, consider
+the following example. Let HG be a HashGroup with n entries, DataSize S, and EntrySize E.
+It is required that the *first (n - 1) entries of HG* "contain" E bytes of application
+data and that the last (nth) entry has at most E bytes of application data.
+Thus, the following inequality always holds:
+
+~~~
+   n * E <= S
+~~~
+
+We will give an example of how to use these sizes for seeking in {{seeking}}.
 
 Locating FLIC leaf and manifest nodes
 -------------------------------------
@@ -373,12 +391,52 @@ Queries:
   interest(name=/the/locator/hint, implicitDigest=h2)
 ~~~
 
-
 Advanced uses of FLIC manifests
 ===============================
 
 The FLIC mechanics has uses cases beyond keeping together a set of
-data objects:
+data objects, such as: seeking, block-level de-duplification, re-publishing
+under a new name, growing ICN collections, and supporting FLICs with different
+block sizes.
+
+Seeking {#seeking}
+-------
+
+Fast seeking (without having to sequentially fetch all content)
+works by skipping over entries for which we know their size.
+The byte offset of the data pointed at by pointer P_i (in a HashGroup with
+EntrySize E and DataSize S) is computed as follows:
+
+~~~
+   offset = (i * E)
+~~~
+
+Recall that the total size of each pointer (except the last) is equal
+to the EntrySize. If P_n is the last pointer in a HashGroup, its size is
+calculated as
+
+~~~
+   size = S - ((n - 1) * E)
+~~~
+
+With these formulas, seeking is done as follows:
+
+~~~
+Input: seek_pos P, a FLIC manifest with a HashGroup having
+       EntrySize E, DataSize S and N entries
+Output: blockindex i and offset o, or out-of-range error
+Algo:
+   if (P >= S)
+      return out-of-range
+   i = floor(P / E)
+   if (i >= N)
+      return out-of-range # bad FLIC encoding
+   o = S - (i * E)
+   return (i, o)
+~~~
+
+Note: If the pointer at position i is a manifest pointer, this algorithm
+has to be called once more, seeking to seek_pos o inside that manifest.
 
 Block-level de-duplification
 ----------------------------
@@ -449,10 +507,11 @@ required.
 Data Chunks of variable size
 ----------------------------
 
-If chunks do not have regular (block) sizes, the HashGroup can be used
-to still convey to a reader the length of the chunks, at manifest
+If chunks do not have regular (block) sizes, and therefore manifests do not
+have consistent entry sizes, the HashGroup can be used
+to still convey to a reader the length of the chunks at the manifest
 level. Example use cases would be chunks each carrying a single ASCII line as
-entered by a user, or a database with variable length records mapped
+entered by a user or a database with variable length records mapped
 to chunks.
 
 ~~~
@@ -493,10 +552,12 @@ Encoding for CCNx1.0
   (Name/0x0 ...)
   (HashGroup/0x1
      (MetaData/0x1
-        (LocatorNm/0x0 (NameComp/0x ...))
-        (BlockSize/0x2 INT)
-        (TotalSize/0x3 INT)
-        (TotalHash/0x4 OCTET[32])
+        (HGLocator/0x0 (NameComp/0x ...))
+        (HGDataSize/0x2 INT)
+        (HGEntrySize/0x3 INT)
+        (HGBlockSize/0x4 INT)
+        (HGDataDigest/0x5 OCTET[32])
+        (HGTreeDepth/0x6 INT)
      )
      (DataPtr/0x2 OCTET[32])
      (MfstPtr/0x3 OCTET[32])
@@ -504,8 +565,7 @@ Encoding for CCNx1.0
 )
 ~~~
 
-Interest: name is locator, use objHashRestriction as selector
-
+Interest: name is locator, use objHashRestriction as selector.
 
 Encoding for NDN
 ----------------
@@ -536,6 +596,6 @@ The assigned NDN content type value for FLIC manifests is 1024 (0x400).
 )
 ~~~
 
-Interest: name is locator, use implicitDigest name component as selector
+Interest: name is locator, use implicitDigest name component as selector.
 
 --- back

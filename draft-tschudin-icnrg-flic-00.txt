@@ -75,22 +75,22 @@ Table of Contents
      2.4.  Metadata in HashGroups  . . . . . . . . . . . . . . . . .   7
      2.5.  Locating FLIC leaf and manifest nodes . . . . . . . . . .   8
    3.  Advanced uses of FLIC manifests . . . . . . . . . . . . . . .   9
-     3.1.  Block-level de-duplification  . . . . . . . . . . . . . .   9
-     3.2.  Growing ICN collections . . . . . . . . . . . . . . . . .   9
-     3.3.  Re-publishing a FLIC under a new name . . . . . . . . . .  10
-     3.4.  Data Chunks of variable size  . . . . . . . . . . . . . .  10
-   4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  10
-     4.1.  Encoding for CCNx1.0  . . . . . . . . . . . . . . . . . .  11
-     4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  11
-     5.1.  URIs  . . . . . . . . . . . . . . . . . . . . . . . . . .  12
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  12
+     3.1.  Seeking . . . . . . . . . . . . . . . . . . . . . . . . .   9
+     3.2.  Block-level de-duplification  . . . . . . . . . . . . . .  10
+     3.3.  Growing ICN collections . . . . . . . . . . . . . . . . .  10
+     3.4.  Re-publishing a FLIC under a new name . . . . . . . . . .  11
+     3.5.  Data Chunks of variable size  . . . . . . . . . . . . . .  11
+   4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  12
+     4.1.  Encoding for CCNx1.0  . . . . . . . . . . . . . . . . . .  12
+     4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  12
+     5.1.  URIs  . . . . . . . . . . . . . . . . . . . . . . . . . .  13
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  13
 
 1.  Introduction
 
 1.1.  FLIC as a Distributed Data Structure
 
    One figure
-
 
 
 
@@ -119,9 +119,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
     | optional name:                     |
     |   /icn/name/of/this/flic           |
     |                                    |
-    | HashGroup:                         |
+    | HashGroup (HG):                    |
     |   optional metadata:               |
-    |     block size, total tree size,   |       leaf
+    |     data size, entry size          |
     |     overall digest, locator, etc.  |    .------.
     |   hash-valued data pointer -----------> | data |
     |     ...                            |    `------'  sub manifest
@@ -185,14 +185,15 @@ Internet-Draft                  ICN-FLIC                   December 2015
       HashValue   := OCTET[32]
 
       MetaData    := Property*
-      Property    := Locator | DataBlockSize | OverallDataSize |
-                     OverallDataSHA256Digest | ...
+      Property    := Locator | DataSize | EntrySize | BlockSize |
+                     DataDigest | TreeDepth | ...
 
    Description:
 
    o  The core of a manifest is the sequence of "hash groups".
 
-   o  A HashGroup consists of a sequence of data or manifest pointers.
+   o  A HashGroup (HG) consists of a sequence of data or manifest
+      pointers.
 
    o  Data as well as manifest pointers are SHA256 digests (32 Bytes);
       their encoding assigns them distinct types.
@@ -217,7 +218,6 @@ Internet-Draft                  ICN-FLIC                   December 2015
    with fetching an object based on its digest only.  The interest for
    such an object consists of a routing hint (locator) plus the given
    digest value.
-
 
 
 
@@ -302,7 +302,7 @@ Internet-Draft                  ICN-FLIC                   December 2015
        Optionally: add name to R, sign manifest R
        Output R
 
-   Obtaining with each manifest a maximum of data pointers is benefitial
+   Obtaining with each manifest a maximum of data pointers is beneficial
    for keeping the download pipeline filled.  On the other hand, this
    tree doesn't support well random access to arbitrary byte positions:
    All data pointers coming before that offset have to be fetched before
@@ -322,14 +322,14 @@ Internet-Draft                  ICN-FLIC                   December 2015
          /           \            /         \
          DDDDDDD      DDDDDDD     DDDDDDD    DDDDDDD
 
+   This can be generalized to k-ary trees by allocating k pointers per
+   manifest instead of 2.
+
 2.3.  Reconstructing the collection's data
 
    To fetch the data associated with a given FLIC (sub-) manifest, the
    receiver sequentially works through all entries found in the
    HashGroups and issues corresponding hash-based interests.  In case of
-   a data hash pointer, the received content object is appended.  In
-   case of a manifest hash pointer, this procedure is called recursively
-   for the received manifest.  In other words, the collection data is
 
 
 
@@ -338,9 +338,13 @@ Tschudin & Wood           Expires June 10, 2016                 [Page 6]
 Internet-Draft                  ICN-FLIC                   December 2015
 
 
-   represented as the concatenation of data leaves from this "depth-
-   first search" (DFS) traversal strategy of the manifest tree.  This
-   procedure works regardless of the tree's shape.
+   a data hash pointer, the received content object is appended.  In
+   case of a manifest hash pointer, this procedure is called recursively
+   for the received manifest.  In other words, the collection data is
+   represented as the concatenation of data leaves from this _pre-order_
+   "depth-first search" (DFS) traversal strategy of the manifest tree.
+   (Currently, pre-order DFS is the only supported traversal strategy.)
+   This procedure works regardless of the tree's shape.
 
    A pseudo code description for fetching is below.
 
@@ -372,19 +376,15 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
    The above DFS code works for FLIC manifest trees of arbitrary shape.
    In case of a skewed tree, no recursion is needed and a single
-   instance of the DFS procedure suffices (tail recursion).
+   instance of the DFS procedure suffices (i.e., one uses tail
+   recursion).
 
 2.4.  Metadata in HashGroups
 
    In FLIC, metadata is linked to HashGroups and permits to inform the
    FLIC retriever about properties of the data that is covered by this
-   hash group.  Examples are overall data bytes or the block size used
-   at production time.  The intent of such metadata is to enable an in-
-   network retriever to optimize its operation - other attributes linked
-   to the collection as a whole (author, copyright etc) is out of scope.
-
-   The list of available metadata is below.
-
+   hash group.  Examples are overall data bytes or the size per entry.
+   The intent of such metadata is to enable an in-network retriever to
 
 
 
@@ -394,22 +394,43 @@ Tschudin & Wood           Expires June 10, 2016                 [Page 7]
 Internet-Draft                  ICN-FLIC                   December 2015
 
 
-   * total length in bytes - permits to skip retrieving this hash group
-     if the offset of interest is bigger
+   optimize its operation - other attributes linked to the collection as
+   a whole (author, copyright, etc.) is out of scope.
 
-   * child node block size - permits to jump to a specific data hash
-     pointer of this group (if all pointers are data hash pointers)
+   The list of available metadata is below.
 
-   * overall application data digest - provides a way to check correct
-     reconstruction of the subtree associated with this hash group
-     (before having reconstructed the full signed FLIC)
+* Locator - provides a new routing hint (name prefix) where the
+  chunks of this hash group can be retrieved from. The default is to
+  use the locator of the root manifest.
 
-   * tree depth - permits a receiver to predict the amount of memory
-     needed when traversing this tree.
+* DataSize - indicates the total number of *application data bytes*
+  contained in a single HashGroup. This does not include bytes consumed
+  by child manifests.
 
-   * locator value - provides a new routing hint (name prefix) where the
-     chunks of this hash group can be retrieved from. The default is to
-     use the locator of the root manifest.
+* EntrySize - indicates the number of *application data bytes* contained
+  by a single entry (pointer) in a HashGroup.
+
+* BlockSize - indicates the size of each data and manifest node used
+  when producing each entry of the HashGroup.
+
+* DataDigest - expresses the overall digest of all application data
+  contained in the HashGroup.
+
+* Tree Depth - expresses the depth of each entry in the HashGroup and
+  allows a receiver to predict the amount of memory needed when
+  traversing this tree.
+
+   To give an example of how the DataSize and EntrySize values are used,
+   consider the following example.  Let HG be a HashGroup with n
+   entries, DataSize S, and EntrySize E.  It is required that the _first
+   (n - 1) entries of HG_ "contain" E bytes of application data and that
+   the last (nth) entry has at most E bytes of application data.  Thus,
+   the following inequality always holds:
+
+      n * E <= S
+
+   We will give an example of how to use these sizes for seeking in
+   Section 3.1.
 
 2.5.  Locating FLIC leaf and manifest nodes
 
@@ -417,6 +438,17 @@ Internet-Draft                  ICN-FLIC                   December 2015
    locator functionality at all: All objects pointed to by a manifest
    are retrieved from the location where the manifest itself was
    obtained from (which is not necessarily its name).  Example:
+
+
+
+
+
+
+
+Tschudin & Wood           Expires June 10, 2016                 [Page 8]
+
+Internet-Draft                  ICN-FLIC                   December 2015
+
 
    Objects:
      manifest(name=/a/b/c, ptr=h1, ptr=hN)  - has hash h0
@@ -437,19 +469,6 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
    Using the locator metadata entry, this behavior can be changed:
 
-
-
-
-
-
-
-
-
-Tschudin & Wood           Expires June 10, 2016                 [Page 8]
-
-Internet-Draft                  ICN-FLIC                   December 2015
-
-
    Objects:
      manifest(name=/a/b/c,
               hashgroup(loc=/x/y/z, ptr=h1)
@@ -465,9 +484,53 @@ Internet-Draft                  ICN-FLIC                   December 2015
 3.  Advanced uses of FLIC manifests
 
    The FLIC mechanics has uses cases beyond keeping together a set of
-   data objects:
+   data objects, such as: seeking, block-level de-duplification, re-
+   publishing under a new name, growing ICN collections, and supporting
+   FLICs with different block sizes.
 
-3.1.  Block-level de-duplification
+3.1.  Seeking
+
+   Fast seeking (without having to sequentially fetch all content) works
+   by skipping over entries for which we know their size.  The byte
+   offset of the data pointed at by pointer P_i (in a HashGroup with
+   EntrySize E and DataSize S) is computed as follows:
+
+      offset = (i * E)
+
+
+
+
+
+Tschudin & Wood           Expires June 10, 2016                 [Page 9]
+
+Internet-Draft                  ICN-FLIC                   December 2015
+
+
+   Recall that the total size of each pointer (except the last) is equal
+   to the EntrySize.  If P_n is the last pointer in a HashGroup, its
+   size is calculated as
+
+      size = S - ((n - 1) * E)
+
+   With these formulas, seeking is done as follows:
+
+   Input: seek_pos P, a FLIC manifest with a HashGroup having
+          EntrySize E, DataSize S and N entries
+   Output: blockindex i and offset o, or out-of-range error
+   Algo:
+      if (P >= S)
+         return out-of-range
+      i = floor(P / E)
+      if (i >= N)
+         return out-of-range # bad FLIC encoding
+      o = S - (i * E)
+      return (i, o)
+
+   Note: If the pointer at position i is a manifest pointer, this
+   algorithm has to be called once more, seeking to seek_pos o inside
+   that manifest.
+
+3.2.  Block-level de-duplification
 
    Consider a huge file, e.g. an ISO image of a DVD or program in binary
    form, that had previously been FLIC-ed but now needs to be patched.
@@ -483,13 +546,21 @@ Internet-Draft                  ICN-FLIC                   December 2015
               \- > h3 --> oldData3              /
                \ > h4 --> oldData4  <-- h4 < - /
 
-3.2.  Growing ICN collections
+3.3.  Growing ICN collections
 
    A log file, for example, grows over time.  Instead of having to re-
    FLIC the grown file it suffices to construct a new manifest with a
    manifest pointer to the old root manifest plus the sequence of data
    hash pointers for the new data (or additional sub-manifests if
    necessary).  Note that this tree will not be skewed (anymore).
+
+
+
+
+Tschudin & Wood           Expires June 10, 2016                [Page 10]
+
+Internet-Draft                  ICN-FLIC                   December 2015
+
 
    old data < -  -  -  mfst_old <-- h_old -  - mfst_new
                                                /
@@ -498,15 +569,7 @@ Internet-Draft                  ICN-FLIC                   December 2015
    ...                                      /
    new dataN <-- h_N -  -  -  -  -  -  -  -/
 
-
-
-
-Tschudin & Wood           Expires June 10, 2016                 [Page 9]
-
-Internet-Draft                  ICN-FLIC                   December 2015
-
-
-3.3.  Re-publishing a FLIC under a new name
+3.4.  Re-publishing a FLIC under a new name
 
    It can happen that a publisher's namespace is part of a service
    provider's prefix.  When switching provider, the publisher may want
@@ -531,19 +594,29 @@ Internet-Draft                  ICN-FLIC                   December 2015
    purpose except retrieving a sub-tree's manifest by name, if would be
    required.
 
-3.4.  Data Chunks of variable size
+3.5.  Data Chunks of variable size
 
-   If chunks do not have regular (block) sizes, the HashGroup can be
-   used to still convey to a reader the length of the chunks, at
-   manifest level.  Example use cases would be chunks each carrying a
-   single ASCII line as entered by a user, or a database with variable
-   length records mapped to chunks.
+   If chunks do not have regular (block) sizes, and therefore manifests
+   do not have consistent entry sizes, the HashGroup can be used to
+   still convey to a reader the length of the chunks at the manifest
+   level.  Example use cases would be chunks each carrying a single
+   ASCII line as entered by a user or a database with variable length
+   records mapped to chunks.
 
    M = (manifest
          (hashgroup((metadata(blocksize=12)) (dataptr=h1))
          (hashgroup((metadata(blocksize=1)) (dataptr=h2))
          ...
        )
+
+
+
+
+
+Tschudin & Wood           Expires June 10, 2016                [Page 11]
+
+Internet-Draft                  ICN-FLIC                   December 2015
+
 
 4.  Encoding
 
@@ -554,13 +627,6 @@ Internet-Draft                  ICN-FLIC                   December 2015
    Moreover, we populate the data structure with all possible entries
    and omit repetition.  An abbreviated example for the NDN Interest
    packet would be:
-
-
-
-Tschudin & Wood           Expires June 10, 2016                [Page 10]
-
-Internet-Draft                  ICN-FLIC                   December 2015
-
 
    (Interest/0x5
      (Name/0x7 (NameComp=0x8 ...) ...)
@@ -577,17 +643,19 @@ Internet-Draft                  ICN-FLIC                   December 2015
      (Name/0x0 ...)
      (HashGroup/0x1
         (MetaData/0x1
-           (LocatorNm/0x0 (NameComp/0x ...))
-           (BlockSize/0x2 INT)
-           (TotalSize/0x3 INT)
-           (TotalHash/0x4 OCTET[32])
+           (HGLocator/0x0 (NameComp/0x ...))
+           (HGDataSize/0x2 INT)
+           (HGEntrySize/0x3 INT)
+           (HGBlockSize/0x4 INT)
+           (HGDataDigest/0x5 OCTET[32])
+           (HGTreeDepth/0x6 INT)
         )
         (DataPtr/0x2 OCTET[32])
         (MfstPtr/0x3 OCTET[32])
      )
    )
 
-   Interest: name is locator, use objHashRestriction as selector
+   Interest: name is locator, use objHashRestriction as selector.
 
 4.2.  Encoding for NDN
 
@@ -601,19 +669,7 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-Tschudin & Wood           Expires June 10, 2016                [Page 11]
+Tschudin & Wood           Expires June 10, 2016                [Page 12]
 
 Internet-Draft                  ICN-FLIC                   December 2015
 
@@ -641,7 +697,7 @@ Internet-Draft                  ICN-FLIC                   December 2015
    )
 
    Interest: name is locator, use implicitDigest name component as
-   selector
+   selector.
 
 5.  References
 
@@ -669,4 +725,4 @@ Authors' Addresses
 
 
 
-Tschudin & Wood           Expires June 10, 2016                [Page 12]
+Tschudin & Wood           Expires June 10, 2016                [Page 13]
