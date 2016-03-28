@@ -2,7 +2,7 @@
 title: File-Like ICN Collection (FLIC)
 abbrev: ICN-FLIC
 docname: draft-tschudin-icnrg-flic-00
-date: 2015-12-08
+date: 2016-3-25
 category: info
 
 ipr: trust200902

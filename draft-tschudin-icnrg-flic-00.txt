@@ -5,8 +5,8 @@
 ICNRG Working Group                                          C. Tschudin
 Internet-Draft                                       University of Basel
 Intended status: Informational                                   C. Wood
-Expires: June 10, 2016                                        PARC, Inc.
-                                                       December 08, 2015
+Expires: September 26, 2016                                   PARC, Inc.
+                                                          March 25, 2016
 
 
                     File-Like ICN Collection (FLIC)
@@ -38,11 +38,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on June 10, 2016.
+   This Internet-Draft will expire on September 26, 2016.
 
 Copyright Notice
 
-   Copyright (c) 2015 IETF Trust and the persons identified as the
+   Copyright (c) 2016 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 1]
+Tschudin & Wood        Expires September 26, 2016               [Page 1]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    to this document.  Code Components extracted from this document must
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 2]
+Tschudin & Wood        Expires September 26, 2016               [Page 2]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
                             root manifest
@@ -165,9 +165,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 3]
+Tschudin & Wood        Expires September 26, 2016               [Page 3]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
       *  Enhance the manifest such that it can serve as a "database
@@ -221,9 +221,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 4]
+Tschudin & Wood        Expires September 26, 2016               [Page 4]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
 2.2.  Creating a FLIC data structure
@@ -277,9 +277,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 5]
+Tschudin & Wood        Expires September 26, 2016               [Page 5]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    Input:
@@ -333,9 +333,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 6]
+Tschudin & Wood        Expires September 26, 2016               [Page 6]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    a data hash pointer, the received content object is appended.  In
@@ -389,9 +389,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 7]
+Tschudin & Wood        Expires September 26, 2016               [Page 7]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    optimize its operation - other attributes linked to the collection as
@@ -445,9 +445,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 8]
+Tschudin & Wood        Expires September 26, 2016               [Page 8]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    Objects:
@@ -501,9 +501,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                 [Page 9]
+Tschudin & Wood        Expires September 26, 2016               [Page 9]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    Recall that the total size of each pointer (except the last) is equal
@@ -557,9 +557,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                [Page 10]
+Tschudin & Wood        Expires September 26, 2016              [Page 10]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    old data < -  -  -  mfst_old <-- h_old -  - mfst_new
@@ -613,9 +613,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                [Page 11]
+Tschudin & Wood        Expires September 26, 2016              [Page 11]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
 4.  Encoding
@@ -669,9 +669,9 @@ Internet-Draft                  ICN-FLIC                   December 2015
 
 
 
-Tschudin & Wood           Expires June 10, 2016                [Page 12]
+Tschudin & Wood        Expires September 26, 2016              [Page 12]
 
-Internet-Draft                  ICN-FLIC                   December 2015
+Internet-Draft                  ICN-FLIC                      March 2016
 
 
    (Data/0x6
@@ -725,4 +725,4 @@ Authors' Addresses
 
 
 
-Tschudin & Wood           Expires June 10, 2016                [Page 13]
+Tschudin & Wood        Expires September 26, 2016              [Page 13]
