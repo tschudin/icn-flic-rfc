@@ -2,7 +2,7 @@
 title: File-Like ICN Collection (FLIC)
 abbrev: ICN-FLIC
 docname: draft-tschudin-icnrg-flic-00
-date: 2016-3-25
+date: 2016-4-4
 category: info
 
 ipr: trust200902
@@ -73,7 +73,6 @@ One figure
   |                                    |
   | HashGroup (HG):                    |
   |   optional metadata:               |
-  |     data size, entry size          |
   |     overall digest, locator, etc.  |    .------.
   |   hash-valued data pointer -----------> | data |
   |     ...                            |    `------'  sub manifest
@@ -120,13 +119,13 @@ We first give the FLIC format in EBN notation:
 ~~~
    ManifestMsg := Name? HashGroup+
    HashGroup   := MetaData? (DataPointer | ManifestPtr)+
-   DataPointer := HashValue
-   ManifestPtr := HashValue
+   DataPointer := Size HashValue
+   ManifestPtr := Size HashValue
    HashValue   := OCTET[32]
+   DataSize    := OCTET[8]
 
    MetaData    := Property*
-   Property    := Locator | DataSize | EntrySize | BlockSize |
-                  DataDigest | TreeDepth | ...
+   Property    := Locator | TotalDataSize | BlockSize | DataDigest | TreeDepth | ...
 ~~~
 
 Description:
@@ -154,7 +153,11 @@ FLIC's tree data structure is a generalized index table as it is known
 from file systems. The pointers, which in an OS typically are harddisk
 block numbers, are replaced by hash values of other ICN objects. These
 ICN objects contain either other manifest nodes, or leaf nodes. Leafs
-contain the actual data of the collection.
+contain the actual data of the collection. Each pointer explicitly indicates
+the amount of application data bytes contained by the referred object. For example,
+the size of a data pointer (to a leaf) represents the size of the leaf's
+content object payload. Conversely, the size of a manifest pointer represents
+the total size of all pointers contained in that manifest.
 
 FLIC makes use of "nameless ICN object" where the network is tasked
 with fetching an object based on its digest only. The interest for
@@ -165,8 +168,7 @@ Creating a FLIC data structure
 ------------------------------
 
 Starting from the original content, the corresponding byte array is
-sliced into chunks (of equal size if blocksize is present in the
-metadata section, except for the last chunk). Each chunk is encoded as
+sliced into chunks. Each chunk is encoded as
 a data object, according the ICN suite.  For each resulting data
 object, the hash value is computed. Groups of consecutive objects are
 formed and the corresponding hash values collected in manifests, which
@@ -260,7 +262,7 @@ HashGroups and issues corresponding hash-based interests. In case of a
 data hash pointer, the received content object is appended. In case of
 a manifest hash pointer, this procedure is called recursively for the
 received manifest. In other words, the collection data is represented
-as the concatenation of data leaves from this *pre-order* "depth-first search"
+as the concatenation of data leaves from this *pre-order* depth-first search
 (DFS) traversal strategy of the manifest tree. (Currently, pre-order DFS is
 the only supported traversal strategy.) This procedure works regardless of
 the tree's shape.
@@ -304,10 +306,10 @@ Metadata in HashGroups
 
 In FLIC, metadata is linked to HashGroups and permits to inform the
 FLIC retriever about properties of the data that is covered by this hash
-group. Examples are overall data bytes or the size per entry. The intent
-of such metadata is to enable an in-network retriever to optimize its
-operation - other attributes linked to the collection as a whole (author,
-copyright, etc.) is out of scope.
+group. Examples are overall data bytes or the overall hash digest (this is akin
+to a Merkle hash). The intent of such metadata is to enable an in-network retriever
+to optimize its operation - other attributes linked to the collection as a whole
+(author, copyright, etc.) is out of scope.
 
 The list of available metadata is below.
 
@@ -316,35 +318,21 @@ The list of available metadata is below.
   chunks of this hash group can be retrieved from. The default is to
   use the locator of the root manifest.
 
-* DataSize - indicates the total number of *application data bytes*
+* TotalDataSize - indicates the total number of *application data bytes*
   contained in a single HashGroup. This does not include bytes consumed
-  by child manifests.  
-
-* EntrySize - indicates the number of *application data bytes* contained
-  by a single entry (pointer) in a HashGroup.
-
-* BlockSize - indicates the size of each data and manifest node used
-  when producing each entry of the HashGroup.
+  by child manifests. This value is equal to the sum of all pointer sizes
+  contained in the HashGroup.
 
 * DataDigest - expresses the overall digest of all application data
   contained in the HashGroup.
+
+* BlockSize - indicates the size of each data and manifest node used
+  when producing each entry of the HashGroup.
 
 * Tree Depth - expresses the depth of each entry in the HashGroup and
   allows a receiver to predict the amount of memory needed when
   traversing this tree.
 ~~~
-
-To give an example of how the DataSize and EntrySize values are used, consider
-the following example. Let HG be a HashGroup with n entries, DataSize S, and EntrySize E.
-It is required that the *first (n - 1) entries of HG* "contain" E bytes of application
-data and that the last (nth) entry has at most E bytes of application data.
-Thus, the following inequality always holds:
-
-~~~
-   n * E <= S
-~~~
-
-We will give an example of how to use these sizes for seeking in {{seeking}}.
 
 Locating FLIC leaf and manifest nodes
 -------------------------------------
@@ -404,35 +392,26 @@ Seeking {#seeking}
 
 Fast seeking (without having to sequentially fetch all content)
 works by skipping over entries for which we know their size.
-The byte offset of the data pointed at by pointer P_i (in a HashGroup with
-EntrySize E and DataSize S) is computed as follows:
+The following expression shows how to compute the byte offset of the data
+pointed at by pointer P_i. In this description, let P_i.size represent
+the Size value of the i-th pointer.
 
 ~~~
-   offset = (i * E)
+   offset = \sum_{i = 1}^{i - 1} P_i.size
 ~~~
 
-Recall that the total size of each pointer (except the last) is equal
-to the EntrySize. If P_n is the last pointer in a HashGroup, its size is
-calculated as
+With these expression, seeking is done as follows:
 
 ~~~
-   size = S - ((n - 1) * E)
-~~~
-
-With these formulas, seeking is done as follows:
-
-~~~
-Input: seek_pos P, a FLIC manifest with a HashGroup having
-       EntrySize E, DataSize S and N entries
+Input: seek_pos P, a FLIC manifest with a HashGroup having N entries
 Output: blockindex i and offset o, or out-of-range error
 Algo:
-   if (P >= S)
-      return out-of-range
-   i = floor(P / E)
-   if (i >= N)
-      return out-of-range # bad FLIC encoding
-   o = S - (i * E)
-   return (i, o)
+    offset = 0
+    for i in 1..N do
+        if (P < P_i.size)
+            return (i, P - offset)
+        offset += P_i.size
+    return out-of-range
 ~~~
 
 Note: If the pointer at position i is a manifest pointer, this algorithm
@@ -507,12 +486,12 @@ required.
 Data Chunks of variable size
 ----------------------------
 
-If chunks do not have regular (block) sizes, and therefore manifests do not
-have consistent entry sizes, the HashGroup can be used
+If chunks do not have regular (block) sizes, the HashGroup can be used
 to still convey to a reader the length of the chunks at the manifest
-level. Example use cases would be chunks each carrying a single ASCII line as
-entered by a user or a database with variable length records mapped
-to chunks.
+level. (This can be computed based on the size of pointers, but the metadata
+field makes this determination simpler.) Example use cases would be chunks each
+carrying a single ASCII line as entered by a user or a database with variable
+length records mapped to chunks.
 
 ~~~
 M = (manifest
@@ -553,14 +532,12 @@ Encoding for CCNx1.0
   (HashGroup/0x1
      (MetaData/0x1
         (HGLocator/0x0 (NameComp/0x ...))
-        (HGDataSize/0x2 INT)
-        (HGEntrySize/0x3 INT)
-        (HGBlockSize/0x4 INT)
-        (HGDataDigest/0x5 OCTET[32])
-        (HGTreeDepth/0x6 INT)
+        (HGTotalDataSize/0x2 INT)
+        (HGDataDigest/0x3 OCTET[32])
+        (HGTreeDepth/0x4 INT)
      )
-     (DataPtr/0x2 OCTET[32])
-     (MfstPtr/0x3 OCTET[32])
+     (DataPtr/0x2 OCTET[8] OCTET[32])
+     (MfstPtr/0x3 OCTET[8] OCTET[32])
   )
 )
 ~~~
@@ -582,13 +559,12 @@ The assigned NDN content type value for FLIC manifests is 1024 (0x400).
     (HashGroup/0xC0
       (MetaInfo/0x14
         (LocatorNm/0xC3 (NameComp/0x8 ...))
-        (TotalHash/0xC4 OCTET[32])
-        (TotalSize/0xC5 INT)
-        (BlockSize/0xC6 INT)
+        (DataDigest/0xC4 OCTET[32])
+        (TotalDataSize/0xC5 INT)
         (TreeDepth/0xC7 INT)
       )
-      (DataPtr/0xC1 OCTET[32])
-      (MfstPtr/0xC2 OCTET[32])
+      (DataPtr/0xC1 OCTET[8] OCTET[32])
+      (MfstPtr/0xC2 OCTET[8] OCTET[32])
     )
   )
   (SignatureInfo/0x16 ...)
