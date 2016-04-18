@@ -400,7 +400,7 @@
 
   <meta name="dct.creator" content="Tschudin, C. and C. Wood" />
   <meta name="dct.identifier" content="urn:ietf:id:draft-tschudin-icnrg-flic-00" />
-  <meta name="dct.issued" scheme="ISO8601" content="2016-3-25" />
+  <meta name="dct.issued" scheme="ISO8601" content="2016-4-04" />
   <meta name="dct.abstract" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
   <meta name="description" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
 
@@ -424,12 +424,12 @@
   <td class="right">C. Wood</td>
 </tr>
 <tr>
-  <td class="left">Expires: September 26, 2016</td>
+  <td class="left">Expires: October 6, 2016</td>
   <td class="right">PARC, Inc.</td>
 </tr>
 <tr>
   <td class="left"></td>
-  <td class="right">March 25, 2016</td>
+  <td class="right">April 04, 2016</td>
 </tr>
 
     	
@@ -450,7 +450,7 @@
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on September 26, 2016.</p>
+<p>This Internet-Draft will expire on October 6, 2016.</p>
 <h1 id="rfc.copyrightnotice">
   <a href="#rfc.copyrightnotice">Copyright Notice</a>
 </h1>
@@ -498,7 +498,6 @@
   |                                    |
   | HashGroup (HG):                    |
   |   optional metadata:               |
-  |     data size, entry size          |
   |     overall digest, locator, etc.  |    .------.
   |   hash-valued data pointer -----------&gt; | data |
   |     ...                            |    `------'  sub manifest
@@ -525,13 +524,13 @@
 <pre>
    ManifestMsg := Name? HashGroup+
    HashGroup   := MetaData? (DataPointer | ManifestPtr)+
-   DataPointer := HashValue
-   ManifestPtr := HashValue
+   DataPointer := Size HashValue
+   ManifestPtr := Size HashValue
    HashValue   := OCTET[32]
+   DataSize    := OCTET[8]
 
    MetaData    := Property*
-   Property    := Locator | DataSize | EntrySize | BlockSize |
-                  DataDigest | TreeDepth | ...
+   Property    := Locator | TotalDataSize | BlockSize | DataDigest | TreeDepth | ...
 </pre>
 <p id="rfc.section.2.p.2">Description:</p>
 <p/>
@@ -544,10 +543,10 @@
   <li>None of the ICN objects used in FLIC are allowed to be chunked, including the (sub-) manifests. The smallest possible complete manifest contains one HashGroup with one pointer to an ICN object.</li>
 </ul>
 <h1 id="rfc.section.2.1"><a href="#rfc.section.2.1">2.1.</a> <a href="#use-of-hash-valued-pointers" id="use-of-hash-valued-pointers">Use of hash-valued pointers</a></h1>
-<p id="rfc.section.2.1.p.1">FLIC&#8217;s tree data structure is a generalized index table as it is known from file systems. The pointers, which in an OS typically are harddisk block numbers, are replaced by hash values of other ICN objects. These ICN objects contain either other manifest nodes, or leaf nodes. Leafs contain the actual data of the collection.</p>
+<p id="rfc.section.2.1.p.1">FLIC&#8217;s tree data structure is a generalized index table as it is known from file systems. The pointers, which in an OS typically are harddisk block numbers, are replaced by hash values of other ICN objects. These ICN objects contain either other manifest nodes, or leaf nodes. Leafs contain the actual data of the collection. Each pointer explicitly indicates the amount of application data bytes contained by the referred object. For example, the size of a data pointer (to a leaf) represents the size of the leaf&#8217;s content object payload. Conversely, the size of a manifest pointer represents the total size of all pointers contained in that manifest.</p>
 <p id="rfc.section.2.1.p.2">FLIC makes use of &#8220;nameless ICN object&#8221; where the network is tasked with fetching an object based on its digest only. The interest for such an object consists of a routing hint (locator) plus the given digest value.</p>
 <h1 id="rfc.section.2.2"><a href="#rfc.section.2.2">2.2.</a> <a href="#creating-a-flic-data-structure" id="creating-a-flic-data-structure">Creating a FLIC data structure</a></h1>
-<p id="rfc.section.2.2.p.1">Starting from the original content, the corresponding byte array is sliced into chunks (of equal size if blocksize is present in the metadata section, except for the last chunk). Each chunk is encoded as a data object, according the ICN suite.  For each resulting data object, the hash value is computed. Groups of consecutive objects are formed and the corresponding hash values collected in manifests, which are also encoded. The hash values of the manifest objects replace the hash values of the covered leaf nodes, thus reducing the number of hash values. This process of hash value collection and replacement is repeated until only one (root) manifest is left.</p>
+<p id="rfc.section.2.2.p.1">Starting from the original content, the corresponding byte array is sliced into chunks. Each chunk is encoded as a data object, according the ICN suite.  For each resulting data object, the hash value is computed. Groups of consecutive objects are formed and the corresponding hash values collected in manifests, which are also encoded. The hash values of the manifest objects replace the hash values of the covered leaf nodes, thus reducing the number of hash values. This process of hash value collection and replacement is repeated until only one (root) manifest is left.</p>
 <pre>
 data1 &lt;-- h1  -  -  -  -  -  -  -  -  -  -  -  - \
 data2 &lt;-- h2 \                                    root mfst
@@ -601,7 +600,7 @@ root manifest=     DDDDDMM
 </pre>
 <p id="rfc.section.2.2.p.5">This can be generalized to k-ary trees by allocating k pointers per manifest instead of 2.</p>
 <h1 id="rfc.section.2.3"><a href="#rfc.section.2.3">2.3.</a> <a href="#reconstructing-the-collections-data" id="reconstructing-the-collections-data">Reconstructing the collection&#8217;s data</a></h1>
-<p id="rfc.section.2.3.p.1">To fetch the data associated with a given FLIC (sub-) manifest, the receiver sequentially works through all entries found in the HashGroups and issues corresponding hash-based interests. In case of a data hash pointer, the received content object is appended. In case of a manifest hash pointer, this procedure is called recursively for the received manifest. In other words, the collection data is represented as the concatenation of data leaves from this <em>pre-order</em> &#8220;depth-first search&#8221; (DFS) traversal strategy of the manifest tree. (Currently, pre-order DFS is the only supported traversal strategy.) This procedure works regardless of the tree&#8217;s shape.</p>
+<p id="rfc.section.2.3.p.1">To fetch the data associated with a given FLIC (sub-) manifest, the receiver sequentially works through all entries found in the HashGroups and issues corresponding hash-based interests. In case of a data hash pointer, the received content object is appended. In case of a manifest hash pointer, this procedure is called recursively for the received manifest. In other words, the collection data is represented as the concatenation of data leaves from this <em>pre-order</em> depth-first search (DFS) traversal strategy of the manifest tree. (Currently, pre-order DFS is the only supported traversal strategy.) This procedure works regardless of the tree&#8217;s shape.</p>
 <p id="rfc.section.2.3.p.2">A pseudo code description for fetching is below.</p>
 <pre>
 Input:
@@ -632,35 +631,28 @@ L:
 </pre>
 <p id="rfc.section.2.3.p.3">The above DFS code works for FLIC manifest trees of arbitrary shape. In case of a skewed tree, no recursion is needed and a single instance of the DFS procedure suffices (i.e., one uses tail recursion).</p>
 <h1 id="rfc.section.2.4"><a href="#rfc.section.2.4">2.4.</a> <a href="#metadata-in-hashgroups" id="metadata-in-hashgroups">Metadata in HashGroups</a></h1>
-<p id="rfc.section.2.4.p.1">In FLIC, metadata is linked to HashGroups and permits to inform the FLIC retriever about properties of the data that is covered by this hash group. Examples are overall data bytes or the size per entry. The intent of such metadata is to enable an in-network retriever to optimize its operation - other attributes linked to the collection as a whole (author, copyright, etc.) is out of scope.</p>
+<p id="rfc.section.2.4.p.1">In FLIC, metadata is linked to HashGroups and permits to inform the FLIC retriever about properties of the data that is covered by this hash group. Examples are overall data bytes or the overall hash digest (this is akin to a Merkle hash). The intent of such metadata is to enable an in-network retriever to optimize its operation - other attributes linked to the collection as a whole (author, copyright, etc.) is out of scope.</p>
 <p id="rfc.section.2.4.p.2">The list of available metadata is below.</p>
 <pre>
 * Locator - provides a new routing hint (name prefix) where the
   chunks of this hash group can be retrieved from. The default is to
   use the locator of the root manifest.
 
-* DataSize - indicates the total number of *application data bytes*
+* TotalDataSize - indicates the total number of *application data bytes*
   contained in a single HashGroup. This does not include bytes consumed
-  by child manifests.  
-
-* EntrySize - indicates the number of *application data bytes* contained
-  by a single entry (pointer) in a HashGroup.
-
-* BlockSize - indicates the size of each data and manifest node used
-  when producing each entry of the HashGroup.
+  by child manifests. This value is equal to the sum of all pointer sizes
+  contained in the HashGroup.
 
 * DataDigest - expresses the overall digest of all application data
   contained in the HashGroup.
+
+* BlockSize - indicates the size of each data and manifest node used
+  when producing each entry of the HashGroup.
 
 * Tree Depth - expresses the depth of each entry in the HashGroup and
   allows a receiver to predict the amount of memory needed when
   traversing this tree.
 </pre>
-<p id="rfc.section.2.4.p.3">To give an example of how the DataSize and EntrySize values are used, consider the following example. Let HG be a HashGroup with n entries, DataSize S, and EntrySize E.  It is required that the <em>first (n - 1) entries of HG</em> &#8220;contain&#8221; E bytes of application data and that the last (nth) entry has at most E bytes of application data.  Thus, the following inequality always holds:</p>
-<pre>
-   n * E &lt;= S
-</pre>
-<p id="rfc.section.2.4.p.4">We will give an example of how to use these sizes for seeking in <a href="#seeking">Section 3.1</a>.</p>
 <h1 id="rfc.section.2.5"><a href="#rfc.section.2.5">2.5.</a> <a href="#locating-flic-leaf-and-manifest-nodes" id="locating-flic-leaf-and-manifest-nodes">Locating FLIC leaf and manifest nodes</a></h1>
 <p id="rfc.section.2.5.p.1">The optional name of a manifest is a mere decoration and has no locator functionality at all: All objects pointed to by a manifest are retrieved from the location where the manifest itself was obtained from (which is not necessarily its name). Example:</p>
 <pre>
@@ -696,29 +688,23 @@ Queries:
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#advanced-uses-of-flic-manifests" id="advanced-uses-of-flic-manifests">Advanced uses of FLIC manifests</a></h1>
 <p id="rfc.section.3.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects, such as: seeking, block-level de-duplification, re-publishing under a new name, growing ICN collections, and supporting FLICs with different block sizes.</p>
 <h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#seeking" id="seeking">Seeking</a></h1>
-<p id="rfc.section.3.1.p.1">Fast seeking (without having to sequentially fetch all content) works by skipping over entries for which we know their size.  The byte offset of the data pointed at by pointer P_i (in a HashGroup with EntrySize E and DataSize S) is computed as follows:</p>
+<p id="rfc.section.3.1.p.1">Fast seeking (without having to sequentially fetch all content) works by skipping over entries for which we know their size.  The following expression shows how to compute the byte offset of the data pointed at by pointer P_i. In this description, let P_i.size represent the Size value of the i-th pointer.</p>
 <pre>
-   offset = (i * E)
+   offset = \sum_{i = 1}^{i - 1} P_i.size
 </pre>
-<p id="rfc.section.3.1.p.2">Recall that the total size of each pointer (except the last) is equal to the EntrySize. If P_n is the last pointer in a HashGroup, its size is calculated as</p>
+<p id="rfc.section.3.1.p.2">With these expression, seeking is done as follows:</p>
 <pre>
-   size = S - ((n - 1) * E)
-</pre>
-<p id="rfc.section.3.1.p.3">With these formulas, seeking is done as follows:</p>
-<pre>
-Input: seek_pos P, a FLIC manifest with a HashGroup having
-       EntrySize E, DataSize S and N entries
+Input: seek_pos P, a FLIC manifest with a HashGroup having N entries
 Output: blockindex i and offset o, or out-of-range error
 Algo:
-   if (P &gt;= S)
-      return out-of-range
-   i = floor(P / E)
-   if (i &gt;= N)
-      return out-of-range # bad FLIC encoding
-   o = S - (i * E)
-   return (i, o)
+    offset = 0
+    for i in 1..N do
+        if (P &lt; P_i.size)
+            return (i, P - offset)
+        offset += P_i.size
+    return out-of-range
 </pre>
-<p id="rfc.section.3.1.p.4">Note: If the pointer at position i is a manifest pointer, this algorithm has to be called once more, seeking to seek_pos o inside that manifest.</p>
+<p id="rfc.section.3.1.p.3">Note: If the pointer at position i is a manifest pointer, this algorithm has to be called once more, seeking to seek_pos o inside that manifest.</p>
 <h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#block-level-de-duplification" id="block-level-de-duplification">Block-level de-duplification</a></h1>
 <p id="rfc.section.3.2.p.1">Consider a huge file, e.g. an ISO image of a DVD or program in binary form, that had previously been FLIC-ed but now needs to be patched.  In this case, all existing encoded ICN chunks can remain in the repository while only the chunks for the patch itself is added to a new manifest data structure, as is shown in the picture below. For example, the <a href="http://plan9.bell-labs.com/sys/doc/venti/venti.pdf">venti</a> archival file system of Plan9 uses this technique.</p>
 <pre>
@@ -748,7 +734,7 @@ new dataN &lt;-- h_N -  -  -  -  -  -  -  -/
 <p id="rfc.section.3.4.p.2">Note that the hash computation (of h) only requires reading the nameless root manifest, not the entire FLIC.</p>
 <p id="rfc.section.3.4.p.3">This example points out the problem of HashGroups having locator metadata elements: A retriever would be urged to follow these hints which are &#8220;hardcoded&#8221; deep inside the FLIC but might have become outdated. We therefore recommend to name FLIC manifests only at the highest level (where these names have no locator function). Child nodes in a FLIC manifest should not be named as these names serve no purpose except retrieving a sub-tree&#8217;s manifest by name, if would be required.</p>
 <h1 id="rfc.section.3.5"><a href="#rfc.section.3.5">3.5.</a> <a href="#data-chunks-of-variable-size" id="data-chunks-of-variable-size">Data Chunks of variable size</a></h1>
-<p id="rfc.section.3.5.p.1">If chunks do not have regular (block) sizes, and therefore manifests do not have consistent entry sizes, the HashGroup can be used to still convey to a reader the length of the chunks at the manifest level. Example use cases would be chunks each carrying a single ASCII line as entered by a user or a database with variable length records mapped to chunks.</p>
+<p id="rfc.section.3.5.p.1">If chunks do not have regular (block) sizes, the HashGroup can be used to still convey to a reader the length of the chunks at the manifest level. (This can be computed based on the size of pointers, but the metadata field makes this determination simpler.) Example use cases would be chunks each carrying a single ASCII line as entered by a user or a database with variable length records mapped to chunks.</p>
 <pre>
 M = (manifest
       (hashgroup((metadata(blocksize=12)) (dataptr=h1))
@@ -775,14 +761,12 @@ M = (manifest
   (HashGroup/0x1
      (MetaData/0x1
         (HGLocator/0x0 (NameComp/0x ...))
-        (HGDataSize/0x2 INT)
-        (HGEntrySize/0x3 INT)
-        (HGBlockSize/0x4 INT)
-        (HGDataDigest/0x5 OCTET[32])
-        (HGTreeDepth/0x6 INT)
+        (HGTotalDataSize/0x2 INT)
+        (HGDataDigest/0x3 OCTET[32])
+        (HGTreeDepth/0x4 INT)
      )
-     (DataPtr/0x2 OCTET[32])
-     (MfstPtr/0x3 OCTET[32])
+     (DataPtr/0x2 OCTET[8] OCTET[32])
+     (MfstPtr/0x3 OCTET[8] OCTET[32])
   )
 )
 </pre>
@@ -799,13 +783,12 @@ M = (manifest
     (HashGroup/0xC0
       (MetaInfo/0x14
         (LocatorNm/0xC3 (NameComp/0x8 ...))
-        (TotalHash/0xC4 OCTET[32])
-        (TotalSize/0xC5 INT)
-        (BlockSize/0xC6 INT)
+        (DataDigest/0xC4 OCTET[32])
+        (TotalDataSize/0xC5 INT)
         (TreeDepth/0xC7 INT)
       )
-      (DataPtr/0xC1 OCTET[32])
-      (MfstPtr/0xC2 OCTET[32])
+      (DataPtr/0xC1 OCTET[8] OCTET[32])
+      (MfstPtr/0xC2 OCTET[8] OCTET[32])
     )
   )
   (SignatureInfo/0x16 ...)
