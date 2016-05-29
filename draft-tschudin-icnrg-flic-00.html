@@ -392,15 +392,17 @@
 <link href="#rfc.section.4" rel="Chapter" title="4 Encoding"/>
 <link href="#rfc.section.4.1" rel="Chapter" title="4.1 Encoding for CCNx1.0"/>
 <link href="#rfc.section.4.2" rel="Chapter" title="4.2 Encoding for NDN"/>
+<link href="#rfc.section.5" rel="Chapter" title="5 Security Considerations"/>
+<link href="#rfc.references" rel="Chapter" title="6 Normative References"/>
 <link href="#rfc.authors" rel="Chapter"/>
 
 
-  <meta name="generator" content="xml2rfc version 2.5.1 - http://tools.ietf.org/tools/xml2rfc" />
+  <meta name="generator" content="xml2rfc version 2.5.0 - http://tools.ietf.org/tools/xml2rfc" />
   <link rel="schema.dct" href="http://purl.org/dc/terms/" />
 
   <meta name="dct.creator" content="Tschudin, C. and C. Wood" />
-  <meta name="dct.identifier" content="urn:ietf:id:draft-tschudin-icnrg-flic-00" />
-  <meta name="dct.issued" scheme="ISO8601" content="2016-4-04" />
+  <meta name="dct.identifier" content="urn:ietf:id:draft-tschudin-icnrg-flic-01" />
+  <meta name="dct.issued" scheme="ISO8601" content="2016-5-30" />
   <meta name="dct.abstract" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
   <meta name="description" content="This document describes a bare bones &#8220;index table&#8221;-approach for organizing a set of ICN data objects into a large, File-Like ICN Collection (FLIC)." />
 
@@ -424,12 +426,12 @@
   <td class="right">C. Wood</td>
 </tr>
 <tr>
-  <td class="left">Expires: October 6, 2016</td>
+  <td class="left">Expires: December 1, 2016</td>
   <td class="right">PARC, Inc.</td>
 </tr>
 <tr>
   <td class="left"></td>
-  <td class="right">April 04, 2016</td>
+  <td class="right">May 30, 2016</td>
 </tr>
 
     	
@@ -437,7 +439,7 @@
   </table>
 
   <p class="title">File-Like ICN Collection (FLIC)<br />
-  <span class="filename">draft-tschudin-icnrg-flic-00</span></p>
+  <span class="filename">draft-tschudin-icnrg-flic-01</span></p>
   
   <h1 id="rfc.abstract">
   <a href="#rfc.abstract">Abstract</a>
@@ -450,7 +452,7 @@
 <p>This Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.</p>
 <p>Internet-Drafts are working documents of the Internet Engineering Task Force (IETF).  Note that other groups may also distribute working documents as Internet-Drafts.  The list of current Internet-Drafts is at http://datatracker.ietf.org/drafts/current/.</p>
 <p>Internet-Drafts are draft documents valid for a maximum of six months and may be updated, replaced, or obsoleted by other documents at any time.  It is inappropriate to use Internet-Drafts as reference material or to cite them other than as "work in progress."</p>
-<p>This Internet-Draft will expire on October 6, 2016.</p>
+<p>This Internet-Draft will expire on December 1, 2016.</p>
 <h1 id="rfc.copyrightnotice">
   <a href="#rfc.copyrightnotice">Copyright Notice</a>
 </h1>
@@ -480,7 +482,9 @@
 </ul><li>4.   <a href="#rfc.section.4">Encoding</a></li>
 <ul><li>4.1.   <a href="#rfc.section.4.1">Encoding for CCNx1.0</a></li>
 <li>4.2.   <a href="#rfc.section.4.2">Encoding for NDN</a></li>
-</ul><li><a href="#rfc.authors">Authors' Addresses</a></li>
+</ul><li>5.   <a href="#rfc.section.5">Security Considerations</a></li>
+<li>6.   <a href="#rfc.references">Normative References</a></li>
+<li><a href="#rfc.authors">Authors' Addresses</a></li>
 
 
   </ul>
@@ -523,22 +527,33 @@
 <p id="rfc.section.2.p.1">We first give the FLIC format in EBN notation:</p>
 <pre>
    ManifestMsg := Name? HashGroup+
-   HashGroup   := MetaData? (DataPointer | ManifestPtr)+
-   DataPointer := Size HashValue
-   ManifestPtr := Size HashValue
-   HashValue   := OCTET[32]
-   DataSize    := OCTET[8]
+
+   HashGroup   := MetaData? (SizeDataPtr | SizeManifestPtr)+
+   BlockHashGroup := MetaData? SizePerPtr (DataPtr | ManifestPtr)+
+
+   DataPtr := HashValue
+   ManifestPtr := HashValue
+   SizeDataPtr := Size HashValue
+   SizeManifestPtr := Size HashValue
+
+   SizePerPtr := Size
+   HashValue   := HashAlgorithm | HashDigest
+   Size        := OCTET[8]
+   HashAlgorithm := T_SHA256 | T_SHA512 | ...
+   HashDigest := OCTET+
 
    MetaData    := Property*
-   Property    := Locator | TotalDataSize | BlockSize | DataDigest | TreeDepth | ...
+   Property    := Locator | OverallByteCount | OverallDataDigest | ...
 </pre>
 <p id="rfc.section.2.p.2">Description:</p>
 <p/>
 
 <ul>
   <li>The core of a manifest is the sequence of &#8220;hash groups&#8221;.</li>
-  <li>A HashGroup (HG) consists of a sequence of data or manifest pointers.</li>
-  <li>Data as well as manifest pointers are SHA256 digests (32 Bytes); their encoding assigns them distinct types.</li>
+  <li>A HashGroup (HG) consists of a sequence of &#8220;sized&#8221; data or manifest pointers.</li>
+  <li>A BlockHashGroup (BHG) consists of a sequence of data or manifest pointers and a mandatory field that lists the total size of each pointer. These HashGroups should be used when each pointer (except the last) contains an identical number of application bytes.</li>
+  <li>Sizes are 64-bit unsigned integers.</li>
+  <li>Data and manifest pointers are cryptographic HashValues encoded according to the mechanism listed in <a href="#CCNxMessages">[CCNxMessages]</a>. Specifically, a HashValue specifies the cryptographic hash algorithm and the actual digest.</li>
   <li>A HashGroup can contain a metadata section to help a reader to optimize content retrieval (block size of leaf nodes, total size, overall digest etc).</li>
   <li>None of the ICN objects used in FLIC are allowed to be chunked, including the (sub-) manifests. The smallest possible complete manifest contains one HashGroup with one pointer to an ICN object.</li>
 </ul>
@@ -638,21 +653,15 @@ L:
   chunks of this hash group can be retrieved from. The default is to
   use the locator of the root manifest.
 
-* TotalDataSize - indicates the total number of *application data bytes*
-  contained in a single HashGroup. This does not include bytes consumed
-  by child manifests. This value is equal to the sum of all pointer sizes
-  contained in the HashGroup.
+* OverallByteCount - indicates the total number of *application
+  data bytes* contained in a single HashGroup. This does not include
+  bytes consumed by child manifests. This value is equal to the sum of
+  all pointer sizes contained in the HashGroup.
 
-* DataDigest - expresses the overall digest of all application data
-  contained in the HashGroup.
-
-* BlockSize - indicates the size of each data and manifest node used
-  when producing each entry of the HashGroup.
-
-* Tree Depth - expresses the depth of each entry in the HashGroup and
-  allows a receiver to predict the amount of memory needed when
-  traversing this tree.
+* OverallDataDigest - expresses the overall digest of all application
+  data contained in the HashGroup.
 </pre>
+<p id="rfc.section.2.4.p.3">BlockHashGroups contain a mandatory piece of metadata called the SizePerPtr.  This value indicates the total number of application bytes contained within each pointer in the hash group <em>except for the last pointer.</em> Normal HashGroups do not require this piece of metadata; Instead, each pointer includes their size explicitly.</p>
 <h1 id="rfc.section.2.5"><a href="#rfc.section.2.5">2.5.</a> <a href="#locating-flic-leaf-and-manifest-nodes" id="locating-flic-leaf-and-manifest-nodes">Locating FLIC leaf and manifest nodes</a></h1>
 <p id="rfc.section.2.5.p.1">The optional name of a manifest is a mere decoration and has no locator functionality at all: All objects pointed to by a manifest are retrieved from the location where the manifest itself was obtained from (which is not necessarily its name). Example:</p>
 <pre>
@@ -688,14 +697,14 @@ Queries:
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#advanced-uses-of-flic-manifests" id="advanced-uses-of-flic-manifests">Advanced uses of FLIC manifests</a></h1>
 <p id="rfc.section.3.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects, such as: seeking, block-level de-duplification, re-publishing under a new name, growing ICN collections, and supporting FLICs with different block sizes.</p>
 <h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#seeking" id="seeking">Seeking</a></h1>
-<p id="rfc.section.3.1.p.1">Fast seeking (without having to sequentially fetch all content) works by skipping over entries for which we know their size.  The following expression shows how to compute the byte offset of the data pointed at by pointer P_i. In this description, let P_i.size represent the Size value of the i-th pointer.</p>
+<p id="rfc.section.3.1.p.1">Fast seeking (without having to sequentially fetch all content) works by skipping over entries for which we know their size.  The following expression shows how to compute the byte offset of the data pointed at by pointer P_i, offset_i. In this description, let P_i represent the Size value of the i-th pointer. For HashGroups, the offset can then be computed as follows:</p>
 <pre>
-   offset = \sum_{i = 1}^{i - 1} P_i.size
+   offset_i = \sum_{i = 1}^{i - 1} P_i.size
 </pre>
-<p id="rfc.section.3.1.p.2">With these expression, seeking is done as follows:</p>
+<p id="rfc.section.3.1.p.2">With this offset, seeking is done as follows:</p>
 <pre>
-Input: seek_pos P, a FLIC manifest with a HashGroup having N entries
-Output: blockindex i and offset o, or out-of-range error
+Input: seek_pos P, a FLIC manifest with a hash group having N entries
+Output: pointer index i and byte offset o, or out-of-range error
 Algo:
     offset = 0
     for i in 1..N do
@@ -704,7 +713,25 @@ Algo:
         offset += P_i.size
     return out-of-range
 </pre>
-<p id="rfc.section.3.1.p.3">Note: If the pointer at position i is a manifest pointer, this algorithm has to be called once more, seeking to seek_pos o inside that manifest.</p>
+<p id="rfc.section.3.1.p.3">Seeking in a BlockHashGroup is different since offsets can be quickly computed.  This is because the size of each pointer P_i except the last is equal to the SizePerPtr value. For a BlockHashGroup with N pointers, OverallByteCount D, and SizePerPointer L, the size of P_N is equal to the following:</p>
+<pre>
+   D - ((N - 1) * L)
+</pre>
+<p id="rfc.section.3.1.p.4">The seeking algorithm can be thus simplified to the following:</p>
+<pre>
+Input: seek_pos P, a FLIC manifest with a hash group having
+       OverallByteCount S and SizePerPointer L.
+Output: pointer index i and byte offset o, or out-of-range error
+Algo:
+    if (P &gt; S)
+        return out-of-range
+    i = floor(P / L)
+    if (i &gt; N)
+        return out-of-range # bad FLIC encoding
+    o = P mod L
+    return (i, o)
+</pre>
+<p id="rfc.section.3.1.p.5">Note: In both cases, if the pointer at position i is a manifest pointer, this algorithm has to be called once more, seeking to seek_pos o inside that manifest.</p>
 <h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#block-level-de-duplification" id="block-level-de-duplification">Block-level de-duplification</a></h1>
 <p id="rfc.section.3.2.p.1">Consider a huge file, e.g. an ISO image of a DVD or program in binary form, that had previously been FLIC-ed but now needs to be patched.  In this case, all existing encoded ICN chunks can remain in the repository while only the chunks for the patch itself is added to a new manifest data structure, as is shown in the picture below. For example, the <a href="http://plan9.bell-labs.com/sys/doc/venti/venti.pdf">venti</a> archival file system of Plan9 uses this technique.</p>
 <pre>
@@ -737,8 +764,8 @@ new dataN &lt;-- h_N -  -  -  -  -  -  -  -/
 <p id="rfc.section.3.5.p.1">If chunks do not have regular (block) sizes, the HashGroup can be used to still convey to a reader the length of the chunks at the manifest level. (This can be computed based on the size of pointers, but the metadata field makes this determination simpler.) Example use cases would be chunks each carrying a single ASCII line as entered by a user or a database with variable length records mapped to chunks.</p>
 <pre>
 M = (manifest
-      (hashgroup((metadata(blocksize=12)) (dataptr=h1))
-      (hashgroup((metadata(blocksize=1)) (dataptr=h2))
+      (hashgroup((metadata(SizePerPtr=4096)) (dataptr=h1))
+      (hashgroup((metadata(SizePerPtr=1500)) (dataptr=h2))
       ...
     )
 </pre>
@@ -761,12 +788,13 @@ M = (manifest
   (HashGroup/0x1
      (MetaData/0x1
         (HGLocator/0x0 (NameComp/0x ...))
-        (HGTotalDataSize/0x2 INT)
-        (HGDataDigest/0x3 OCTET[32])
-        (HGTreeDepth/0x4 INT)
+        (HGOverallByteCount/0x2 INT)
+        (HGOverallDataDigest/0x3 OCTET[32])
      )
      (DataPtr/0x2 OCTET[8] OCTET[32])
      (MfstPtr/0x3 OCTET[8] OCTET[32])
+     (SizeDataPtr/0x4 OCTET[32])
+     (SizeMfstPtr/0x5 OCTET[32])
   )
 )
 </pre>
@@ -783,12 +811,13 @@ M = (manifest
     (HashGroup/0xC0
       (MetaInfo/0x14
         (LocatorNm/0xC3 (NameComp/0x8 ...))
-        (DataDigest/0xC4 OCTET[32])
-        (TotalDataSize/0xC5 INT)
-        (TreeDepth/0xC7 INT)
+        (OverallDataDigest/0xC4 OCTET[32])
+        (OverallByteCount/0xC5 INT)
       )
       (DataPtr/0xC1 OCTET[8] OCTET[32])
       (MfstPtr/0xC2 OCTET[8] OCTET[32])
+      (SizeDataPtr/0xC3 OCTET[32])
+      (SizeMfstPtr/0xC4 OCTET[32])
     )
   )
   (SignatureInfo/0x16 ...)
@@ -796,6 +825,19 @@ M = (manifest
 )
 </pre>
 <p id="rfc.section.4.2.p.2">Interest: name is locator, use implicitDigest name component as selector.</p>
+<h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> <a href="#security-considerations" id="security-considerations">Security Considerations</a></h1>
+<p id="rfc.section.5.p.1">None.</p>
+<h1 id="rfc.references"><a href="#rfc.references">6.</a> Normative References</h1>
+<table>
+  <tbody>
+    <tr>
+      <td class="reference">
+        <b id="CCNxMessages">[CCNxMessages]</b>
+      </td>
+      <td class="top"><a>PARC, .</a>, <a>PARC, .</a> and <a>. PARC</a>, "<a href="https://datatracker.ietf.org/doc/draft-irtf-icnrg-ccnxmessages/">CCNx Messages in TLV Format</a>", n.d..</td>
+    </tr>
+  </tbody>
+</table>
 <h1 id="rfc.authors">
   <a href="#rfc.authors">Authors' Addresses</a>
 </h1>

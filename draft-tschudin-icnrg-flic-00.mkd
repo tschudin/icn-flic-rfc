@@ -1,8 +1,8 @@
 ---
 title: File-Like ICN Collection (FLIC)
 abbrev: ICN-FLIC
-docname: draft-tschudin-icnrg-flic-00
-date: 2016-4-4
+docname: draft-tschudin-icnrg-flic-01
+date: 2016-5-30
 category: info
 
 ipr: trust200902
@@ -26,7 +26,20 @@ author:
     email: christopher.wood@parc.com
 
 normative:
----  RFC2119:
+    CCNxMessages:
+        target: https://datatracker.ietf.org/doc/draft-irtf-icnrg-ccnxmessages/
+        title: CCNx Messages in TLV Format
+        author:
+            -
+                name: M. Mosko
+                ins: PARC
+            -
+                name: I. Solis
+                ins: PARC
+            -
+                name: C. Wood
+                ins: PARC
+
 ---  RFC3986:
 ---  RFC4086:
 ---  RFC4648:
@@ -118,24 +131,41 @@ We first give the FLIC format in EBN notation:
 
 ~~~
    ManifestMsg := Name? HashGroup+
-   HashGroup   := MetaData? (DataPointer | ManifestPtr)+
-   DataPointer := Size HashValue
-   ManifestPtr := Size HashValue
-   HashValue   := OCTET[32]
-   DataSize    := OCTET[8]
+
+   HashGroup   := MetaData? (SizeDataPtr | SizeManifestPtr)+
+   BlockHashGroup := MetaData? SizePerPtr (DataPtr | ManifestPtr)+
+
+   DataPtr := HashValue
+   ManifestPtr := HashValue
+   SizeDataPtr := Size HashValue
+   SizeManifestPtr := Size HashValue
+
+   SizePerPtr := Size
+   HashValue   := HashAlgorithm | HashDigest
+   Size        := OCTET[8]
+   HashAlgorithm := T_SHA256 | T_SHA512 | ...
+   HashDigest := OCTET+
 
    MetaData    := Property*
-   Property    := Locator | TotalDataSize | BlockSize | DataDigest | TreeDepth | ...
+   Property    := Locator | OverallByteCount | OverallDataDigest | ...
 ~~~
 
 Description:
 
 * The core of a manifest is the sequence of "hash groups".
 
-* A HashGroup (HG) consists of a sequence of data or manifest pointers.
+* A HashGroup (HG) consists of a sequence of "sized" data or manifest pointers.
 
-* Data as well as manifest pointers are SHA256 digests (32 Bytes);
-  their encoding assigns them distinct types.
+* A BlockHashGroup (BHG) consists of a sequence of data or manifest pointers and
+a mandatory field that lists the total size of each pointer. These HashGroups
+should be used when each pointer (except the last) contains an identical number
+of application bytes.
+
+* Sizes are 64-bit unsigned integers.
+
+* Data and manifest pointers are cryptographic HashValues encoded according
+  to the mechanism listed in {{CCNxMessages}}. Specifically, a HashValue
+  specifies the cryptographic hash algorithm and the actual digest.
 
 * A HashGroup can contain a metadata section to help a reader to
   optimize content retrieval (block size of leaf nodes, total size,
@@ -318,21 +348,20 @@ The list of available metadata is below.
   chunks of this hash group can be retrieved from. The default is to
   use the locator of the root manifest.
 
-* TotalDataSize - indicates the total number of *application data bytes*
-  contained in a single HashGroup. This does not include bytes consumed
-  by child manifests. This value is equal to the sum of all pointer sizes
-  contained in the HashGroup.
+* OverallByteCount - indicates the total number of *application
+  data bytes* contained in a single HashGroup. This does not include
+  bytes consumed by child manifests. This value is equal to the sum of
+  all pointer sizes contained in the HashGroup.
 
-* DataDigest - expresses the overall digest of all application data
-  contained in the HashGroup.
-
-* BlockSize - indicates the size of each data and manifest node used
-  when producing each entry of the HashGroup.
-
-* Tree Depth - expresses the depth of each entry in the HashGroup and
-  allows a receiver to predict the amount of memory needed when
-  traversing this tree.
+* OverallDataDigest - expresses the overall digest of all application
+  data contained in the HashGroup.
 ~~~
+
+BlockHashGroups contain a mandatory piece of metadata called the SizePerPtr.
+This value indicates the total number of application bytes contained within
+each pointer in the hash group *except for the last pointer.* Normal HashGroups
+do not require this piece of metadata; Instead, each pointer includes their
+size explicitly.
 
 Locating FLIC leaf and manifest nodes
 -------------------------------------
@@ -393,18 +422,19 @@ Seeking {#seeking}
 Fast seeking (without having to sequentially fetch all content)
 works by skipping over entries for which we know their size.
 The following expression shows how to compute the byte offset of the data
-pointed at by pointer P_i. In this description, let P_i.size represent
-the Size value of the i-th pointer.
+pointed at by pointer P_i, offset_i. In this description, let P_i represent
+the Size value of the i-th pointer. For HashGroups, the offset
+can then be computed as follows:
 
 ~~~
-   offset = \sum_{i = 1}^{i - 1} P_i.size
+   offset_i = \sum_{i = 1}^{i - 1} P_i.size
 ~~~
 
-With these expression, seeking is done as follows:
+With this offset, seeking is done as follows:
 
 ~~~
-Input: seek_pos P, a FLIC manifest with a HashGroup having N entries
-Output: blockindex i and offset o, or out-of-range error
+Input: seek_pos P, a FLIC manifest with a hash group having N entries
+Output: pointer index i and byte offset o, or out-of-range error
 Algo:
     offset = 0
     for i in 1..N do
@@ -414,8 +444,33 @@ Algo:
     return out-of-range
 ~~~
 
-Note: If the pointer at position i is a manifest pointer, this algorithm
-has to be called once more, seeking to seek_pos o inside that manifest.
+Seeking in a BlockHashGroup is different since offsets can be quickly computed.
+This is because the size of each pointer P_i except the last is equal to the SizePerPtr
+value. For a BlockHashGroup with N pointers, OverallByteCount D, and SizePerPointer L,
+the size of P_N is equal to the following:
+
+~~~
+   D - ((N - 1) * L)
+~~~
+
+The seeking algorithm can be thus simplified to the following:
+
+~~~
+Input: seek_pos P, a FLIC manifest with a hash group having
+       OverallByteCount S and SizePerPointer L.
+Output: pointer index i and byte offset o, or out-of-range error
+Algo:
+    if (P > S)
+        return out-of-range
+    i = floor(P / L)
+    if (i > N)
+        return out-of-range # bad FLIC encoding
+    o = P mod L
+    return (i, o)
+~~~
+
+Note: In both cases, if the pointer at position i is a manifest pointer, this
+algorithm has to be called once more, seeking to seek_pos o inside that manifest.
 
 Block-level de-duplification
 ----------------------------
@@ -495,8 +550,8 @@ length records mapped to chunks.
 
 ~~~
 M = (manifest
-      (hashgroup((metadata(blocksize=12)) (dataptr=h1))
-      (hashgroup((metadata(blocksize=1)) (dataptr=h2))
+      (hashgroup((metadata(SizePerPtr=4096)) (dataptr=h1))
+      (hashgroup((metadata(SizePerPtr=1500)) (dataptr=h2))
       ...
     )
 ~~~
@@ -532,12 +587,13 @@ Encoding for CCNx1.0
   (HashGroup/0x1
      (MetaData/0x1
         (HGLocator/0x0 (NameComp/0x ...))
-        (HGTotalDataSize/0x2 INT)
-        (HGDataDigest/0x3 OCTET[32])
-        (HGTreeDepth/0x4 INT)
+        (HGOverallByteCount/0x2 INT)
+        (HGOverallDataDigest/0x3 OCTET[32])
      )
      (DataPtr/0x2 OCTET[8] OCTET[32])
      (MfstPtr/0x3 OCTET[8] OCTET[32])
+     (SizeDataPtr/0x4 OCTET[32])
+     (SizeMfstPtr/0x5 OCTET[32])
   )
 )
 ~~~
@@ -559,12 +615,13 @@ The assigned NDN content type value for FLIC manifests is 1024 (0x400).
     (HashGroup/0xC0
       (MetaInfo/0x14
         (LocatorNm/0xC3 (NameComp/0x8 ...))
-        (DataDigest/0xC4 OCTET[32])
-        (TotalDataSize/0xC5 INT)
-        (TreeDepth/0xC7 INT)
+        (OverallDataDigest/0xC4 OCTET[32])
+        (OverallByteCount/0xC5 INT)
       )
       (DataPtr/0xC1 OCTET[8] OCTET[32])
       (MfstPtr/0xC2 OCTET[8] OCTET[32])
+      (SizeDataPtr/0xC3 OCTET[32])
+      (SizeMfstPtr/0xC4 OCTET[32])
     )
   )
   (SignatureInfo/0x16 ...)
@@ -573,5 +630,9 @@ The assigned NDN content type value for FLIC manifests is 1024 (0x400).
 ~~~
 
 Interest: name is locator, use implicitDigest name component as selector.
+
+# Security Considerations
+
+None.
 
 --- back

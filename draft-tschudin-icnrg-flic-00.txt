@@ -5,12 +5,12 @@
 ICNRG Working Group                                          C. Tschudin
 Internet-Draft                                       University of Basel
 Intended status: Informational                                   C. Wood
-Expires: October 6, 2016                                      PARC, Inc.
-                                                          April 04, 2016
+Expires: December 1, 2016                                     PARC, Inc.
+                                                            May 30, 2016
 
 
                     File-Like ICN Collection (FLIC)
-                      draft-tschudin-icnrg-flic-00
+                      draft-tschudin-icnrg-flic-01
 
 Abstract
 
@@ -38,7 +38,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on October 6, 2016.
+   This Internet-Draft will expire on December 1, 2016.
 
 Copyright Notice
 
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Tschudin & Wood          Expires October 6, 2016                [Page 1]
+Tschudin & Wood         Expires December 1, 2016                [Page 1]
 
-Internet-Draft                  ICN-FLIC                      April 2016
+Internet-Draft                  ICN-FLIC                        May 2016
 
 
    to this document.  Code Components extracted from this document must
@@ -69,22 +69,25 @@ Table of Contents
      1.1.  FLIC as a Distributed Data Structure  . . . . . . . . . .   2
      1.2.  Design goals  . . . . . . . . . . . . . . . . . . . . . .   3
    2.  File-Like ICN Collection (FLIC) Format  . . . . . . . . . . .   4
-     2.1.  Use of hash-valued pointers . . . . . . . . . . . . . . .   4
+     2.1.  Use of hash-valued pointers . . . . . . . . . . . . . . .   5
      2.2.  Creating a FLIC data structure  . . . . . . . . . . . . .   5
-     2.3.  Reconstructing the collection's data  . . . . . . . . . .   6
-     2.4.  Metadata in HashGroups  . . . . . . . . . . . . . . . . .   7
-     2.5.  Locating FLIC leaf and manifest nodes . . . . . . . . . .   8
-   3.  Advanced uses of FLIC manifests . . . . . . . . . . . . . . .   9
-     3.1.  Seeking . . . . . . . . . . . . . . . . . . . . . . . . .   9
-     3.2.  Block-level de-duplification  . . . . . . . . . . . . . .  10
-     3.3.  Growing ICN collections . . . . . . . . . . . . . . . . .  10
-     3.4.  Re-publishing a FLIC under a new name . . . . . . . . . .  10
-     3.5.  Data Chunks of variable size  . . . . . . . . . . . . . .  11
-   4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  11
-     4.1.  Encoding for CCNx1.0  . . . . . . . . . . . . . . . . . .  11
-     4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  12
-     5.1.  URIs  . . . . . . . . . . . . . . . . . . . . . . . . . .  13
-   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  13
+     2.3.  Reconstructing the collection's data  . . . . . . . . . .   7
+     2.4.  Metadata in HashGroups  . . . . . . . . . . . . . . . . .   8
+     2.5.  Locating FLIC leaf and manifest nodes . . . . . . . . . .   9
+   3.  Advanced uses of FLIC manifests . . . . . . . . . . . . . . .  10
+     3.1.  Seeking . . . . . . . . . . . . . . . . . . . . . . . . .  10
+     3.2.  Block-level de-duplification  . . . . . . . . . . . . . .  11
+     3.3.  Growing ICN collections . . . . . . . . . . . . . . . . .  11
+     3.4.  Re-publishing a FLIC under a new name . . . . . . . . . .  12
+     3.5.  Data Chunks of variable size  . . . . . . . . . . . . . .  12
+   4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  13
+     4.1.  Encoding for CCNx1.0  . . . . . . . . . . . . . . . . . .  13
+     4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  13
+   5.  Security Considerations . . . . . . . . . . . . . . . . . . .  14
+   6.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  14
+     6.1.  Normative References  . . . . . . . . . . . . . . . . . .  14
+     6.2.  URIs  . . . . . . . . . . . . . . . . . . . . . . . . . .  14
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .  14
 
 1.  Introduction
 
@@ -106,12 +109,9 @@ Table of Contents
 
 
 
-
-
-
-Tschudin & Wood          Expires October 6, 2016                [Page 2]
+Tschudin & Wood         Expires December 1, 2016                [Page 2]
 
-Internet-Draft                  ICN-FLIC                      April 2016
+Internet-Draft                  ICN-FLIC                        May 2016
 
 
                             root manifest
@@ -165,9 +165,9 @@ Internet-Draft                  ICN-FLIC                      April 2016
 
 
 
-Tschudin & Wood          Expires October 6, 2016                [Page 3]
+Tschudin & Wood         Expires December 1, 2016                [Page 3]
 
-Internet-Draft                  ICN-FLIC                      April 2016
+Internet-Draft                  ICN-FLIC                        May 2016
 
 
       *  Enhance the manifest such that it can serve as a "database
@@ -178,25 +178,53 @@ Internet-Draft                  ICN-FLIC                      April 2016
 
    We first give the FLIC format in EBN notation:
 
-   ManifestMsg := Name? HashGroup+
-   HashGroup   := MetaData? (DataPointer | ManifestPtr)+
-   DataPointer := Size HashValue
-   ManifestPtr := Size HashValue
-   HashValue   := OCTET[32]
-   DataSize    := OCTET[8]
+     ManifestMsg := Name? HashGroup+
 
-   MetaData    := Property*
-   Property    := Locator | TotalDataSize | BlockSize | DataDigest | TreeDepth | ...
+     HashGroup   := MetaData? (SizeDataPtr | SizeManifestPtr)+
+     BlockHashGroup := MetaData? SizePerPtr (DataPtr | ManifestPtr)+
+
+     DataPtr := HashValue
+     ManifestPtr := HashValue
+     SizeDataPtr := Size HashValue
+     SizeManifestPtr := Size HashValue
+
+     SizePerPtr := Size
+     HashValue   := HashAlgorithm | HashDigest
+     Size        := OCTET[8]
+     HashAlgorithm := T_SHA256 | T_SHA512 | ...
+     HashDigest := OCTET+
+
+     MetaData    := Property*
+     Property    := Locator | OverallByteCount | OverallDataDigest | ...
 
    Description:
 
    o  The core of a manifest is the sequence of "hash groups".
 
-   o  A HashGroup (HG) consists of a sequence of data or manifest
-      pointers.
+   o  A HashGroup (HG) consists of a sequence of "sized" data or
+      manifest pointers.
 
-   o  Data as well as manifest pointers are SHA256 digests (32 Bytes);
-      their encoding assigns them distinct types.
+   o  A BlockHashGroup (BHG) consists of a sequence of data or manifest
+      pointers and a mandatory field that lists the total size of each
+      pointer.  These HashGroups should be used when each pointer
+      (except the last) contains an identical number of application
+      bytes.
+
+   o  Sizes are 64-bit unsigned integers.
+
+   o  Data and manifest pointers are cryptographic HashValues encoded
+      according to the mechanism listed in [CCNxMessages].
+      Specifically, a HashValue specifies the cryptographic hash
+      algorithm and the actual digest.
+
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016                [Page 4]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
 
    o  A HashGroup can contain a metadata section to help a reader to
       optimize content retrieval (block size of leaf nodes, total size,
@@ -218,13 +246,6 @@ Internet-Draft                  ICN-FLIC                      April 2016
    pointer (to a leaf) represents the size of the leaf's content object
    payload.  Conversely, the size of a manifest pointer represents the
    total size of all pointers contained in that manifest.
-
-
-
-Tschudin & Wood          Expires October 6, 2016                [Page 4]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
 
    FLIC makes use of "nameless ICN object" where the network is tasked
    with fetching an object based on its digest only.  The interest for
@@ -253,6 +274,14 @@ Internet-Draft                  ICN-FLIC                      April 2016
    Of special interest are "skewed trees" where a pointer to a manifest
    may only appear as last pointer of (sub-) manifests.  Such a tree
    becomes a sequential list of manifests with a maximum of datapointers
+
+
+
+Tschudin & Wood         Expires December 1, 2016                [Page 5]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
+
    per manifest packet.  Beside the tree shape we also show this data
    structure in form of packet content where D stands for a data pointer
    and M is the hash of a manifest packet.
@@ -267,20 +296,6 @@ Internet-Draft                  ICN-FLIC                      April 2016
    DDDDDDM--> DDDDDDM--> ....... DDDDDDM--> DDDDDDD
 
    A pseudo code description for producing a skewed tree follows below.
-
-
-
-
-
-
-
-
-
-
-Tschudin & Wood          Expires October 6, 2016                [Page 5]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
 
    Input:
        Application data D of size |D| (bytes)
@@ -314,6 +329,15 @@ Internet-Draft                  ICN-FLIC                      April 2016
    for the "first half" of the left content, the last slots then points
    to a manifest for the rest.
 
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016                [Page 6]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
+
    root manifest=     DDDDDMM
               ____________/  \_____
              /                     \
@@ -330,14 +354,6 @@ Internet-Draft                  ICN-FLIC                      April 2016
    To fetch the data associated with a given FLIC (sub-) manifest, the
    receiver sequentially works through all entries found in the
    HashGroups and issues corresponding hash-based interests.  In case of
-
-
-
-Tschudin & Wood          Expires October 6, 2016                [Page 6]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
-
    a data hash pointer, the received content object is appended.  In
    case of a manifest hash pointer, this procedure is called recursively
    for the received manifest.  In other words, the collection data is
@@ -347,6 +363,36 @@ Internet-Draft                  ICN-FLIC                      April 2016
    This procedure works regardless of the tree's shape.
 
    A pseudo code description for fetching is below.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016                [Page 7]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
 
    Input:
        Root manifest R
@@ -386,37 +432,41 @@ Internet-Draft                  ICN-FLIC                      April 2016
    hash group.  Examples are overall data bytes or the overall hash
    digest (this is akin to a Merkle hash).  The intent of such metadata
    is to enable an in-network retriever to optimize its operation -
-
-
-
-Tschudin & Wood          Expires October 6, 2016                [Page 7]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
-
    other attributes linked to the collection as a whole (author,
    copyright, etc.) is out of scope.
 
    The list of available metadata is below.
 
-* Locator - provides a new routing hint (name prefix) where the
-  chunks of this hash group can be retrieved from. The default is to
-  use the locator of the root manifest.
 
-* TotalDataSize - indicates the total number of *application data bytes*
-  contained in a single HashGroup. This does not include bytes consumed
-  by child manifests. This value is equal to the sum of all pointer sizes
-  contained in the HashGroup.
 
-* DataDigest - expresses the overall digest of all application data
-  contained in the HashGroup.
 
-* BlockSize - indicates the size of each data and manifest node used
-  when producing each entry of the HashGroup.
 
-* Tree Depth - expresses the depth of each entry in the HashGroup and
-  allows a receiver to predict the amount of memory needed when
-  traversing this tree.
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016                [Page 8]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
+
+  * Locator - provides a new routing hint (name prefix) where the
+    chunks of this hash group can be retrieved from. The default is to
+    use the locator of the root manifest.
+
+  * OverallByteCount - indicates the total number of *application
+    data bytes* contained in a single HashGroup. This does not include
+    bytes consumed by child manifests. This value is equal to the sum of
+    all pointer sizes contained in the HashGroup.
+
+  * OverallDataDigest - expresses the overall digest of all application
+    data contained in the HashGroup.
+
+   BlockHashGroups contain a mandatory piece of metadata called the
+   SizePerPtr.  This value indicates the total number of application
+   bytes contained within each pointer in the hash group _except for the
+   last pointer._ Normal HashGroups do not require this piece of
+   metadata; Instead, each pointer includes their size explicitly.
 
 2.5.  Locating FLIC leaf and manifest nodes
 
@@ -442,15 +492,19 @@ Internet-Draft                  ICN-FLIC                      April 2016
      ...
      interest(name=/the/locator/hint, implicitDigest=hN)
 
-
-
-
-Tschudin & Wood          Expires October 6, 2016                [Page 8]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
-
    Using the locator metadata entry, this behavior can be changed:
+
+
+
+
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016                [Page 9]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
 
    Objects:
      manifest(name=/a/b/c,
@@ -476,15 +530,16 @@ Internet-Draft                  ICN-FLIC                      April 2016
    Fast seeking (without having to sequentially fetch all content) works
    by skipping over entries for which we know their size.  The following
    expression shows how to compute the byte offset of the data pointed
-   at by pointer P_i.  In this description, let P_i.size represent the
-   Size value of the i-th pointer.
+   at by pointer P_i, offset_i.  In this description, let P_i represent
+   the Size value of the i-th pointer.  For HashGroups, the offset can
+   then be computed as follows:
 
-      offset = \sum_{i = 1}^{i - 1} P_i.size
+      offset_i = \sum_{i = 1}^{i - 1} P_i.size
 
-   With these expression, seeking is done as follows:
+   With this offset, seeking is done as follows:
 
-   Input: seek_pos P, a FLIC manifest with a HashGroup having N entries
-   Output: blockindex i and offset o, or out-of-range error
+   Input: seek_pos P, a FLIC manifest with a hash group having N entries
+   Output: pointer index i and byte offset o, or out-of-range error
    Algo:
        offset = 0
        for i in 1..N do
@@ -493,18 +548,39 @@ Internet-Draft                  ICN-FLIC                      April 2016
            offset += P_i.size
        return out-of-range
 
-   Note: If the pointer at position i is a manifest pointer, this
-   algorithm has to be called once more, seeking to seek_pos o inside
-   that manifest.
+   Seeking in a BlockHashGroup is different since offsets can be quickly
+   computed.  This is because the size of each pointer P_i except the
+   last is equal to the SizePerPtr value.  For a BlockHashGroup with N
+   pointers, OverallByteCount D, and SizePerPointer L, the size of P_N
+   is equal to the following:
 
 
 
 
-
-Tschudin & Wood          Expires October 6, 2016                [Page 9]
+Tschudin & Wood         Expires December 1, 2016               [Page 10]
 
-Internet-Draft                  ICN-FLIC                      April 2016
+Internet-Draft                  ICN-FLIC                        May 2016
 
+
+      D - ((N - 1) * L)
+
+   The seeking algorithm can be thus simplified to the following:
+
+   Input: seek_pos P, a FLIC manifest with a hash group having
+          OverallByteCount S and SizePerPointer L.
+   Output: pointer index i and byte offset o, or out-of-range error
+   Algo:
+       if (P > S)
+           return out-of-range
+       i = floor(P / L)
+       if (i > N)
+           return out-of-range # bad FLIC encoding
+       o = P mod L
+       return (i, o)
+
+   Note: In both cases, if the pointer at position i is a manifest
+   pointer, this algorithm has to be called once more, seeking to
+   seek_pos o inside that manifest.
 
 3.2.  Block-level de-duplification
 
@@ -530,6 +606,18 @@ Internet-Draft                  ICN-FLIC                      April 2016
    hash pointers for the new data (or additional sub-manifests if
    necessary).  Note that this tree will not be skewed (anymore).
 
+
+
+
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016               [Page 11]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
+
    old data < -  -  -  mfst_old <-- h_old -  - mfst_new
                                                /
    new data1 <-- h_1 -  -  -  -  -  -  -  -  -/
@@ -553,15 +641,6 @@ Internet-Draft                  ICN-FLIC                      April 2016
    Note that the hash computation (of h) only requires reading the
    nameless root manifest, not the entire FLIC.
 
-
-
-
-
-Tschudin & Wood          Expires October 6, 2016               [Page 10]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
-
    This example points out the problem of HashGroups having locator
    metadata elements: A retriever would be urged to follow these hints
    which are "hardcoded" deep inside the FLIC but might have become
@@ -582,10 +661,18 @@ Internet-Draft                  ICN-FLIC                      April 2016
    to chunks.
 
    M = (manifest
-         (hashgroup((metadata(blocksize=12)) (dataptr=h1))
-         (hashgroup((metadata(blocksize=1)) (dataptr=h2))
+         (hashgroup((metadata(SizePerPtr=4096)) (dataptr=h1))
+         (hashgroup((metadata(SizePerPtr=1500)) (dataptr=h2))
          ...
        )
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016               [Page 12]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
 
 4.  Encoding
 
@@ -607,29 +694,19 @@ Internet-Draft                  ICN-FLIC                      April 2016
 
 4.1.  Encoding for CCNx1.0
 
-
-
-
-
-
-
-Tschudin & Wood          Expires October 6, 2016               [Page 11]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
-
    [FIXED_HEADER OCTET[8]]
    (ManifestMsg/0x6
      (Name/0x0 ...)
      (HashGroup/0x1
         (MetaData/0x1
            (HGLocator/0x0 (NameComp/0x ...))
-           (HGTotalDataSize/0x2 INT)
-           (HGDataDigest/0x3 OCTET[32])
-           (HGTreeDepth/0x4 INT)
+           (HGOverallByteCount/0x2 INT)
+           (HGOverallDataDigest/0x3 OCTET[32])
         )
         (DataPtr/0x2 OCTET[8] OCTET[32])
         (MfstPtr/0x3 OCTET[8] OCTET[32])
+        (SizeDataPtr/0x4 OCTET[32])
+        (SizeMfstPtr/0x5 OCTET[32])
      )
    )
 
@@ -640,6 +717,19 @@ Internet-Draft                  ICN-FLIC                      April 2016
    The assigned NDN content type value for FLIC manifests is 1024
    (0x400).
 
+
+
+
+
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016               [Page 13]
+
+Internet-Draft                  ICN-FLIC                        May 2016
+
+
    (Data/0x6
      (Name/0x7 ...)
      (MetaInfo/0x14
@@ -649,12 +739,13 @@ Internet-Draft                  ICN-FLIC                      April 2016
        (HashGroup/0xC0
          (MetaInfo/0x14
            (LocatorNm/0xC3 (NameComp/0x8 ...))
-           (DataDigest/0xC4 OCTET[32])
-           (TotalDataSize/0xC5 INT)
-           (TreeDepth/0xC7 INT)
+           (OverallDataDigest/0xC4 OCTET[32])
+           (OverallByteCount/0xC5 INT)
          )
          (DataPtr/0xC1 OCTET[8] OCTET[32])
          (MfstPtr/0xC2 OCTET[8] OCTET[32])
+         (SizeDataPtr/0xC3 OCTET[32])
+         (SizeMfstPtr/0xC4 OCTET[32])
        )
      )
      (SignatureInfo/0x16 ...)
@@ -664,19 +755,20 @@ Internet-Draft                  ICN-FLIC                      April 2016
    Interest: name is locator, use implicitDigest name component as
    selector.
 
+5.  Security Considerations
 
+   None.
 
+6.  References
 
+6.1.  Normative References
 
+   [CCNxMessages]
+              PARC, ., PARC, ., and . PARC, "CCNx Messages in TLV
+              Format", n.d., <https://datatracker.ietf.org/doc/draft-
+              irtf-icnrg-ccnxmessages/>.
 
-Tschudin & Wood          Expires October 6, 2016               [Page 12]
-
-Internet-Draft                  ICN-FLIC                      April 2016
-
-
-5.  References
-
-5.1.  URIs
+6.2.  URIs
 
    [1] http://plan9.bell-labs.com/sys/doc/venti/venti.pdf
 
@@ -686,6 +778,12 @@ Authors' Addresses
    University of Basel
 
    Email: christian.tschudin@unibas.ch
+
+
+
+Tschudin & Wood         Expires December 1, 2016               [Page 14]
+
+Internet-Draft                  ICN-FLIC                        May 2016
 
 
    Christopher A. Wood
@@ -725,4 +823,18 @@ Authors' Addresses
 
 
 
-Tschudin & Wood          Expires October 6, 2016               [Page 13]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Tschudin & Wood         Expires December 1, 2016               [Page 15]
