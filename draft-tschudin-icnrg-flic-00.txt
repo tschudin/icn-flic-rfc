@@ -188,11 +188,11 @@ Internet-Draft                  ICN-FLIC                        May 2016
      SizeDataPtr := Size HashValue
      SizeManifestPtr := Size HashValue
 
-     SizePerPtr := Size
-     HashValue   := HashAlgorithm | HashDigest
-     Size        := OCTET[8]
+     SizePerPtr    := Size
+     HashValue     := HashAlgorithm HashDigest
+     Size          := OCTET[8]
      HashAlgorithm := T_SHA256 | T_SHA512 | ...
-     HashDigest := OCTET+
+     HashDigest    := OCTET+
 
      MetaData    := Property*
      Property    := Locator | OverallByteCount | OverallDataDigest | ...

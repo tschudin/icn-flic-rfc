@@ -397,7 +397,7 @@
 <link href="#rfc.authors" rel="Chapter"/>
 
 
-  <meta name="generator" content="xml2rfc version 2.5.0 - http://tools.ietf.org/tools/xml2rfc" />
+  <meta name="generator" content="xml2rfc version 2.5.1 - http://tools.ietf.org/tools/xml2rfc" />
   <link rel="schema.dct" href="http://purl.org/dc/terms/" />
 
   <meta name="dct.creator" content="Tschudin, C. and C. Wood" />
@@ -536,11 +536,11 @@
    SizeDataPtr := Size HashValue
    SizeManifestPtr := Size HashValue
 
-   SizePerPtr := Size
-   HashValue   := HashAlgorithm | HashDigest
-   Size        := OCTET[8]
+   SizePerPtr    := Size
+   HashValue     := HashAlgorithm HashDigest
+   Size          := OCTET[8]
    HashAlgorithm := T_SHA256 | T_SHA512 | ...
-   HashDigest := OCTET+
+   HashDigest    := OCTET+
 
    MetaData    := Property*
    Property    := Locator | OverallByteCount | OverallDataDigest | ...
