@@ -2,7 +2,7 @@
 title: File-Like ICN Collection (FLIC)
 abbrev: ICN-FLIC
 docname: draft-tschudin-icnrg-flic-01
-date: 2016-5-30
+date: 2016-7-06
 category: info
 
 ipr: trust200902
@@ -580,7 +580,7 @@ Example Encoding for CCNx1.0
 
 Interest: name is locator, use objHashRestriction as selector.
 
-Encoding for NDN
+Example Encoding for NDN
 ----------------
 
 The assigned NDN content type value for FLIC manifests is 1024 (0x400).

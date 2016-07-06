@@ -5,8 +5,8 @@
 ICNRG Working Group                                          C. Tschudin
 Internet-Draft                                       University of Basel
 Intended status: Informational                                   C. Wood
-Expires: December 1, 2016                                     PARC, Inc.
-                                                            May 30, 2016
+Expires: January 7, 2017                                      PARC, Inc.
+                                                           July 06, 2016
 
 
                     File-Like ICN Collection (FLIC)
@@ -38,7 +38,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on December 1, 2016.
+   This Internet-Draft will expire on January 7, 2017.
 
 Copyright Notice
 
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 1]
+Tschudin & Wood          Expires January 7, 2017                [Page 1]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    to this document.  Code Components extracted from this document must
@@ -82,7 +82,7 @@ Table of Contents
      3.5.  Data Chunks of variable size  . . . . . . . . . . . . . .  12
    4.  Encoding  . . . . . . . . . . . . . . . . . . . . . . . . . .  13
      4.1.  Example Encoding for CCNx1.0  . . . . . . . . . . . . . .  13
-     4.2.  Encoding for NDN  . . . . . . . . . . . . . . . . . . . .  13
+     4.2.  Example Encoding for NDN  . . . . . . . . . . . . . . . .  13
    5.  Security Considerations . . . . . . . . . . . . . . . . . . .  14
    6.  References  . . . . . . . . . . . . . . . . . . . . . . . . .  14
      6.1.  Normative References  . . . . . . . . . . . . . . . . . .  14
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 2]
+Tschudin & Wood          Expires January 7, 2017                [Page 2]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
                             root manifest
@@ -165,9 +165,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 3]
+Tschudin & Wood          Expires January 7, 2017                [Page 3]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
       *  Enhance the manifest such that it can serve as a "database
@@ -221,9 +221,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 4]
+Tschudin & Wood          Expires January 7, 2017                [Page 4]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    o  A HashGroup can contain a metadata section to help a reader to
@@ -277,9 +277,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 5]
+Tschudin & Wood          Expires January 7, 2017                [Page 5]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    per manifest packet.  Beside the tree shape we also show this data
@@ -333,9 +333,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 6]
+Tschudin & Wood          Expires January 7, 2017                [Page 6]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    root manifest=     DDDDDMM
@@ -389,9 +389,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 7]
+Tschudin & Wood          Expires January 7, 2017                [Page 7]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    Input:
@@ -445,9 +445,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 8]
+Tschudin & Wood          Expires January 7, 2017                [Page 8]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
   * Locator - provides a new routing hint (name prefix) where the
@@ -501,9 +501,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016                [Page 9]
+Tschudin & Wood          Expires January 7, 2017                [Page 9]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    Objects:
@@ -557,9 +557,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016               [Page 10]
+Tschudin & Wood          Expires January 7, 2017               [Page 10]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    In a BlockHashGroup with k pointers, the size of P_k is equal to:
@@ -613,9 +613,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016               [Page 11]
+Tschudin & Wood          Expires January 7, 2017               [Page 11]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    old data < -  -  -  mfst_old <-- h_old -  - mfst_new
@@ -669,9 +669,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016               [Page 12]
+Tschudin & Wood          Expires January 7, 2017               [Page 12]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
 4.  Encoding
@@ -706,7 +706,7 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
    Interest: name is locator, use objHashRestriction as selector.
 
-4.2.  Encoding for NDN
+4.2.  Example Encoding for NDN
 
    The assigned NDN content type value for FLIC manifests is 1024
    (0x400).
@@ -725,9 +725,9 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016               [Page 13]
+Tschudin & Wood          Expires January 7, 2017               [Page 13]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    (Data/0x6
@@ -781,9 +781,9 @@ Authors' Addresses
 
 
 
-Tschudin & Wood         Expires December 1, 2016               [Page 14]
+Tschudin & Wood          Expires January 7, 2017               [Page 14]
 
-Internet-Draft                  ICN-FLIC                        May 2016
+Internet-Draft                  ICN-FLIC                       July 2016
 
 
    Christopher A. Wood
@@ -837,4 +837,4 @@ Internet-Draft                  ICN-FLIC                        May 2016
 
 
 
-Tschudin & Wood         Expires December 1, 2016               [Page 15]
+Tschudin & Wood          Expires January 7, 2017               [Page 15]
