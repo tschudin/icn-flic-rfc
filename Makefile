@@ -1,6 +1,6 @@
 # Makefile
 
-FN=draft-tschudin-icnrg-flic-00
+FN=draft-tschudin-icnrg-flic-01
 
 all: ${FN}.txt ${FN}.html
 
