@@ -35,7 +35,7 @@ normative:
                 ins: PARC
             -
                 name: I. Solis
-                ins: PARC
+                ins: LinkedIn
             -
                 name: C. Wood
                 ins: PARC
@@ -126,8 +126,6 @@ We first give the FLIC format in EBN notation:
    SizePerPtr    := Size
    HashValue     := See {{CCNxMessages}}
    Size          := OCTET[8]
-   HashAlgorithm := T_SHA256 | T_SHA512 | ...
-   HashDigest    := OCTET+
 
    MetaData    := Property*
    Property    := Locator | OverallByteCount | OverallDataDigest | ...

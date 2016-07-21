@@ -191,8 +191,6 @@ Internet-Draft                  ICN-FLIC                       July 2016
      SizePerPtr    := Size
      HashValue     := See {{CCNxMessages}}
      Size          := OCTET[8]
-     HashAlgorithm := T_SHA256 | T_SHA512 | ...
-     HashDigest    := OCTET+
 
      MetaData    := Property*
      Property    := Locator | OverallByteCount | OverallDataDigest | ...
@@ -217,7 +215,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
       Specifically, a HashValue specifies the cryptographic hash
       algorithm and the actual digest.
 
-
+   o  A HashGroup can contain a metadata section to help a reader to
+      optimize content retrieval (block size of leaf nodes, total size,
+      overall digest etc).
 
 
 
@@ -225,10 +225,6 @@ Tschudin & Wood          Expires January 7, 2017                [Page 4]
 
 Internet-Draft                  ICN-FLIC                       July 2016
 
-
-   o  A HashGroup can contain a metadata section to help a reader to
-      optimize content retrieval (block size of leaf nodes, total size,
-      overall digest etc).
 
    o  None of the ICN objects used in FLIC are allowed to be chunked,
       including the (sub-) manifests.  The smallest possible complete
@@ -274,6 +270,10 @@ Internet-Draft                  ICN-FLIC                       July 2016
    Of special interest are "skewed trees" where a pointer to a manifest
    may only appear as last pointer of (sub-) manifests.  Such a tree
    becomes a sequential list of manifests with a maximum of datapointers
+   per manifest packet.  Beside the tree shape we also show this data
+   structure in form of packet content where D stands for a data pointer
+   and M is the hash of a manifest packet.
+
 
 
 
@@ -281,10 +281,6 @@ Tschudin & Wood          Expires January 7, 2017                [Page 5]
 
 Internet-Draft                  ICN-FLIC                       July 2016
 
-
-   per manifest packet.  Beside the tree shape we also show this data
-   structure in form of packet content where D stands for a data pointer
-   and M is the hash of a manifest packet.
 
    data1   <-- h1  -  -  -  -  -  -  -  -  root mfst
    ...                                    /
@@ -328,6 +324,10 @@ Internet-Draft                  ICN-FLIC                       July 2016
    for the last two slots.  The second last slot points to a manifest
    for the "first half" of the left content, the last slots then points
    to a manifest for the rest.
+
+
+
+
 
 
 
@@ -764,7 +764,7 @@ Internet-Draft                  ICN-FLIC                       July 2016
 6.1.  Normative References
 
    [CCNxMessages]
-              PARC, ., PARC, ., and . PARC, "CCNx Messages in TLV
+              PARC, ., LinkedIn, ., and . PARC, "CCNx Messages in TLV
               Format", n.d., <https://datatracker.ietf.org/doc/draft-
               irtf-icnrg-ccnxmessages/>.
 
