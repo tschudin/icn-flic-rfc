@@ -385,7 +385,7 @@
 <link href="#rfc.section.2.5" rel="Chapter" title="2.5 Locating FLIC leaf and manifest nodes"/>
 <link href="#rfc.section.3" rel="Chapter" title="3 Advanced uses of FLIC manifests"/>
 <link href="#rfc.section.3.1" rel="Chapter" title="3.1 Seeking"/>
-<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Block-level de-duplification"/>
+<link href="#rfc.section.3.2" rel="Chapter" title="3.2 Block-level de-duplication"/>
 <link href="#rfc.section.3.3" rel="Chapter" title="3.3 Growing ICN collections"/>
 <link href="#rfc.section.3.4" rel="Chapter" title="3.4 Re-publishing a FLIC under a new name"/>
 <link href="#rfc.section.3.5" rel="Chapter" title="3.5 Data Chunks of variable size"/>
@@ -475,7 +475,7 @@
 <li>2.5.   <a href="#rfc.section.2.5">Locating FLIC leaf and manifest nodes</a></li>
 </ul><li>3.   <a href="#rfc.section.3">Advanced uses of FLIC manifests</a></li>
 <ul><li>3.1.   <a href="#rfc.section.3.1">Seeking</a></li>
-<li>3.2.   <a href="#rfc.section.3.2">Block-level de-duplification</a></li>
+<li>3.2.   <a href="#rfc.section.3.2">Block-level de-duplication</a></li>
 <li>3.3.   <a href="#rfc.section.3.3">Growing ICN collections</a></li>
 <li>3.4.   <a href="#rfc.section.3.4">Re-publishing a FLIC under a new name</a></li>
 <li>3.5.   <a href="#rfc.section.3.5">Data Chunks of variable size</a></li>
@@ -519,7 +519,7 @@
 <ul>
   <li>Copy the proven UNIX inode concept: <ul><li>index tables and memory pointers</li></ul></li>
   <li>Adaption to ICN: <ul><li>hash values instead of block numbers, unique with high probability</li></ul></li>
-  <li>Advantages (over non-manifest collections): <ul><li>single root manifest signature covers all elements of the full collection, including intermediate sub manifests</li><li>eliminate reference to chunk numbering schemata (hash values only)</li><li>supports block-level deduplification (can lead to a directed acyclic graph, or DAG, instead of a tree)</li></ul></li>
+  <li>Advantages (over non-manifest collections): <ul><li>single root manifest signature covers all elements of the full collection, including intermediate sub manifests</li><li>eliminate reference to chunk numbering schemata (hash values only)</li><li>supports block-level de-duplication (can lead to a directed acyclic graph, or DAG, instead of a tree)</li></ul></li>
   <li>Limitations <ul><li>All data leafs must be present at manifest creation time (otherwise one cannot compute the pointers)</li></ul></li>
   <li>Potential extensions (for study): <ul><li>Enhance the manifest such that it can serve as a &#8220;database cursor&#8221; or as a cursor over a time series, e.g. having entries for &#8220;previous&#8221; and &#8220;next&#8221; collections.</li></ul></li>
 </ul>
@@ -695,7 +695,7 @@ Queries:
   interest(name=/the/locator/hint, implicitDigest=h2)
 </pre>
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> <a href="#advanced-uses-of-flic-manifests" id="advanced-uses-of-flic-manifests">Advanced uses of FLIC manifests</a></h1>
-<p id="rfc.section.3.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects, such as: seeking, block-level de-duplification, re-publishing under a new name, growing ICN collections, and supporting FLICs with different block sizes.</p>
+<p id="rfc.section.3.p.1">The FLIC mechanics has uses cases beyond keeping together a set of data objects, such as: seeking, block-level de-duplication, re-publishing under a new name, growing ICN collections, and supporting FLICs with different block sizes.</p>
 <h1 id="rfc.section.3.1"><a href="#rfc.section.3.1">3.1.</a> <a href="#seeking" id="seeking">Seeking</a></h1>
 <p id="rfc.section.3.1.p.1">Fast seeking (without having to sequentially fetch all content) works by skipping over entries for which we know their size.  The following expression shows how to compute the byte offset of the data pointed at by pointer P_i, offset_i. In this formula, let P_i represent the Size value of the i-th pointer.</p>
 <pre>
@@ -736,7 +736,7 @@ Algo:
     return (i, o)
 </pre>
 <p id="rfc.section.3.1.p.6">Note: In both cases, if the pointer at position i is a manifest pointer, this algorithm has to be called once more, seeking to seek_pos o inside that manifest.</p>
-<h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#block-level-de-duplification" id="block-level-de-duplification">Block-level de-duplification</a></h1>
+<h1 id="rfc.section.3.2"><a href="#rfc.section.3.2">3.2.</a> <a href="#block-level-de-duplication" id="block-level-de-duplication">Block-level de-duplication</a></h1>
 <p id="rfc.section.3.2.p.1">Consider a huge file, e.g. an ISO image of a DVD or program in binary form, that had previously been FLIC-ed but now needs to be patched.  In this case, all existing encoded ICN chunks can remain in the repository while only the chunks for the patch itself is added to a new manifest data structure, as is shown in the picture below. For example, the <a href="http://plan9.bell-labs.com/sys/doc/venti/venti.pdf">venti</a> archival file system of Plan9 uses this technique.</p>
 <pre>
 old_mfst -  - &gt; h1 --&gt; oldData1  &lt;-- h1 &lt; -  -  new_mfst

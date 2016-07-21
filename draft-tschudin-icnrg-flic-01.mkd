@@ -94,7 +94,7 @@ Design goals
   * single root manifest signature covers all elements of the full
     collection, including intermediate sub manifests
   * eliminate reference to chunk numbering schemata (hash values only)
-  * supports block-level deduplification (can lead to a directed acyclic
+  * supports block-level de-duplication (can lead to a directed acyclic
     graph, or DAG, instead of a tree)
 
 * Limitations
@@ -395,7 +395,7 @@ Advanced uses of FLIC manifests
 ===============================
 
 The FLIC mechanics has uses cases beyond keeping together a set of
-data objects, such as: seeking, block-level de-duplification, re-publishing
+data objects, such as: seeking, block-level de-duplication, re-publishing
 under a new name, growing ICN collections, and supporting FLICs with different
 block sizes.
 
@@ -460,7 +460,7 @@ Algo:
 Note: In both cases, if the pointer at position i is a manifest pointer, this
 algorithm has to be called once more, seeking to seek_pos o inside that manifest.
 
-Block-level de-duplification
+Block-level de-duplication
 ----------------------------
 
 Consider a huge file, e.g. an ISO image of a DVD or program in binary

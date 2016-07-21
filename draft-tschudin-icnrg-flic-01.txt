@@ -76,7 +76,7 @@ Table of Contents
      2.5.  Locating FLIC leaf and manifest nodes . . . . . . . . . .   9
    3.  Advanced uses of FLIC manifests . . . . . . . . . . . . . . .  10
      3.1.  Seeking . . . . . . . . . . . . . . . . . . . . . . . . .  10
-     3.2.  Block-level de-duplification  . . . . . . . . . . . . . .  11
+     3.2.  Block-level de-duplication  . . . . . . . . . . . . . . .  11
      3.3.  Growing ICN collections . . . . . . . . . . . . . . . . .  11
      3.4.  Re-publishing a FLIC under a new name . . . . . . . . . .  12
      3.5.  Data Chunks of variable size  . . . . . . . . . . . . . .  12
@@ -152,7 +152,7 @@ Internet-Draft                  ICN-FLIC                       July 2016
       *  eliminate reference to chunk numbering schemata (hash values
          only)
 
-      *  supports block-level deduplification (can lead to a directed
+      *  supports block-level de-duplication (can lead to a directed
          acyclic graph, or DAG, instead of a tree)
 
    o  Limitations
@@ -521,7 +521,7 @@ Internet-Draft                  ICN-FLIC                       July 2016
 3.  Advanced uses of FLIC manifests
 
    The FLIC mechanics has uses cases beyond keeping together a set of
-   data objects, such as: seeking, block-level de-duplification, re-
+   data objects, such as: seeking, block-level de-duplication, re-
    publishing under a new name, growing ICN collections, and supporting
    FLICs with different block sizes.
 
@@ -585,7 +585,7 @@ Internet-Draft                  ICN-FLIC                       July 2016
    pointer, this algorithm has to be called once more, seeking to
    seek_pos o inside that manifest.
 
-3.2.  Block-level de-duplification
+3.2.  Block-level de-duplication
 
    Consider a huge file, e.g. an ISO image of a DVD or program in binary
    form, that had previously been FLIC-ed but now needs to be patched.
