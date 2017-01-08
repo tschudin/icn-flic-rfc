@@ -22,8 +22,8 @@ author:
  -
     ins: C. Wood
     name: Christopher A. Wood
-    organization: PARC, Inc.
-    email: christopher.wood@parc.com
+    organization: University of California Irvine
+    email: woodc1@uci.edu
 
 normative:
     CCNxMessages:
