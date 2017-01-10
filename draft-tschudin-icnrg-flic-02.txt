@@ -5,12 +5,12 @@
 ICNRG Working Group                                          C. Tschudin
 Internet-Draft                                       University of Basel
 Intended status: Informational                                   C. Wood
-Expires: January 7, 2017                                      PARC, Inc.
-                                                           July 06, 2016
+Expires: July 13, 2017                   University of California Irvine
+                                                        January 09, 2017
 
 
                     File-Like ICN Collection (FLIC)
-                      draft-tschudin-icnrg-flic-01
+                      draft-tschudin-icnrg-flic-02
 
 Abstract
 
@@ -38,11 +38,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on January 7, 2017.
+   This Internet-Draft will expire on July 13, 2017.
 
 Copyright Notice
 
-   Copyright (c) 2016 IETF Trust and the persons identified as the
+   Copyright (c) 2017 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -53,9 +53,9 @@ Copyright Notice
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 1]
+Tschudin & Wood           Expires July 13, 2017                 [Page 1]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    to this document.  Code Components extracted from this document must
@@ -109,9 +109,9 @@ Table of Contents
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 2]
+Tschudin & Wood           Expires July 13, 2017                 [Page 2]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
                             root manifest
@@ -165,9 +165,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 3]
+Tschudin & Wood           Expires July 13, 2017                 [Page 3]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
       *  Enhance the manifest such that it can serve as a "database
@@ -221,9 +221,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 4]
+Tschudin & Wood           Expires July 13, 2017                 [Page 4]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    o  None of the ICN objects used in FLIC are allowed to be chunked,
@@ -277,9 +277,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 5]
+Tschudin & Wood           Expires July 13, 2017                 [Page 5]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    data1   <-- h1  -  -  -  -  -  -  -  -  root mfst
@@ -333,9 +333,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 6]
+Tschudin & Wood           Expires July 13, 2017                 [Page 6]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    root manifest=     DDDDDMM
@@ -389,9 +389,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 7]
+Tschudin & Wood           Expires July 13, 2017                 [Page 7]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    Input:
@@ -445,9 +445,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 8]
+Tschudin & Wood           Expires July 13, 2017                 [Page 8]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
   * Locator - provides a new routing hint (name prefix) where the
@@ -501,9 +501,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017                [Page 9]
+Tschudin & Wood           Expires July 13, 2017                 [Page 9]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    Objects:
@@ -557,9 +557,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017               [Page 10]
+Tschudin & Wood           Expires July 13, 2017                [Page 10]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    In a BlockHashGroup with k pointers, the size of P_k is equal to:
@@ -613,9 +613,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017               [Page 11]
+Tschudin & Wood           Expires July 13, 2017                [Page 11]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    old data < -  -  -  mfst_old <-- h_old -  - mfst_new
@@ -669,9 +669,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017               [Page 12]
+Tschudin & Wood           Expires July 13, 2017                [Page 12]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
 4.  Encoding
@@ -725,9 +725,9 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017               [Page 13]
+Tschudin & Wood           Expires July 13, 2017                [Page 13]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    (Data/0x6
@@ -781,17 +781,15 @@ Authors' Addresses
 
 
 
-Tschudin & Wood          Expires January 7, 2017               [Page 14]
+Tschudin & Wood           Expires July 13, 2017                [Page 14]
 
-Internet-Draft                  ICN-FLIC                       July 2016
+Internet-Draft                  ICN-FLIC                    January 2017
 
 
    Christopher A. Wood
-   PARC, Inc.
+   University of California Irvine
 
-   Email: christopher.wood@parc.com
-
-
+   Email: woodc1@uci.edu
 
 
 
@@ -837,4 +835,6 @@ Internet-Draft                  ICN-FLIC                       July 2016
 
 
 
-Tschudin & Wood          Expires January 7, 2017               [Page 15]
+
+
+Tschudin & Wood           Expires July 13, 2017                [Page 15]
