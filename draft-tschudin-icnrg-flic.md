@@ -1,7 +1,7 @@
 ---
 title: File-Like ICN Collection (FLIC)
 abbrev: ICN-FLIC
-docname: draft-tschudin-icnrg-flic-02
+docname: draft-tschudin-icnrg-flic-latest
 date: 2017-1-9
 category: info
 
